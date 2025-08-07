@@ -74,7 +74,7 @@
                 const error = ref(null);
 
                 // Configuración de la API
-                const API_BASE_URL = 'https://dulpromax-backend.onrender.com'; // Reemplaza con tu URL de producción
+                const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://b2b-wa72.onrender.com';
                 
                 // Función para verificar el estado de la API
                 const checkApiStatus = async () => {
