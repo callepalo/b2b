@@ -13,7 +13,10 @@ app = FastAPI(
 # Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, reemplazar con los dominios permitidos
+    allow_origins=[
+        "https://dulpromax.netlify.app",
+        "http://localhost:8000"  # Para desarrollo local
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
