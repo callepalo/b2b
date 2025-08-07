@@ -8,9 +8,6 @@ from datetime import datetime
 # Configuración de Supabase
 from config.supabase import get_supabase
 
-# Inicializar Supabase
-supabase = get_supabase()
-
 app = FastAPI(
     title="Dulpromax API",
     description="API para el sistema de Dulpromax",
@@ -70,9 +67,13 @@ async def health_check() -> HealthCheckResponse:
         environment=os.getenv("ENVIRONMENT", "production")
     )
 
+# Dependencia para obtener la instancia de Supabase
+def get_supabase_client():
+    return get_supabase(use_service_role=True)
+
 # Endpoints para Productos
 @app.get("/productos", response_model=List[Producto])
-async def listar_productos():
+async def listar_productos(supabase: Client = Depends(get_supabase_client)):
     """
     Obtiene todos los productos del catálogo.
     """
@@ -86,7 +87,10 @@ async def listar_productos():
         )
 
 @app.post("/productos", response_model=Producto, status_code=status.HTTP_201_CREATED)
-async def crear_producto(producto: ProductoCreate):
+async def crear_producto(
+    producto: ProductoCreate,
+    supabase: Client = Depends(get_supabase_client)
+):
     """
     Crea un nuevo producto en el catálogo.
     """
@@ -109,7 +113,10 @@ async def crear_producto(producto: ProductoCreate):
         )
 
 @app.get("/productos/{producto_id}", response_model=Producto)
-async def obtener_producto(producto_id: str):
+async def obtener_producto(
+    producto_id: str,
+    supabase: Client = Depends(get_supabase_client)
+):
     """
     Obtiene un producto por su ID.
     """
@@ -133,7 +140,11 @@ async def obtener_producto(producto_id: str):
         )
 
 @app.put("/productos/{producto_id}", response_model=Producto)
-async def actualizar_producto(producto_id: str, producto: ProductoCreate):
+async def actualizar_producto(
+    producto_id: str,
+    producto: ProductoCreate,
+    supabase: Client = Depends(get_supabase_client)
+):
     """
     Actualiza un producto existente.
     """
@@ -168,7 +179,10 @@ async def actualizar_producto(producto_id: str, producto: ProductoCreate):
         )
 
 @app.delete("/productos/{producto_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def eliminar_producto(producto_id: str):
+async def eliminar_producto(
+    producto_id: str,
+    supabase: Client = Depends(get_supabase_client)
+):
     """
     Elimina un producto del catálogo.
     """
