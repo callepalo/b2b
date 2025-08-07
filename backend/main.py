@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 
 # Configuración de Supabase
+from supabase import Client
 from config.supabase import get_supabase
 
 app = FastAPI(
