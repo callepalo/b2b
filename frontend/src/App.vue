@@ -1,47 +1,101 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+
+const API_URL = 'https://b2b-wa72.onrender.com';
+const productos = ref([]);
+
+// Obtener todos los productos
+const obtenerProductos = async () => {
+  try {
+    const { data } = await axios.get(`${API_URL}/productos`);
+    productos.value = data;
+  } catch (error) {
+    console.error('Error al obtener productos:', error);
+    alert('Error al cargar los productos');
+  }
+};
+
+// Cargar productos al montar el componente
+onMounted(() => {
+  obtenerProductos();
+});
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+  <div class="container mt-5">
+    <h1 class="mb-4">Lista de Productos</h1>
+    
+    <div v-if="productos.length === 0" class="alert alert-info">
+      Cargando productos...
     </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+    
+    <div v-else class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Precio</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="producto in productos" :key="producto.id">
+            <td>{{ producto.id }}</td>
+            <td>{{ producto.nombre }}</td>
+            <td>{{ producto.descripcion }}</td>
+            <td>${{ producto.precio }}</td>
+            <td>{{ producto.stock }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
+<style>
+/* Estilos básicos */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.table {
+  width: 100%;
+  margin-bottom: 1rem;
+  color: #212529;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+.table th,
+.table td {
+  padding: 0.75rem;
+  vertical-align: top;
+  border-top: 1px solid #dee2e6;
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+.table thead th {
+  vertical-align: bottom;
+  border-bottom: 2px solid #dee2e6;
+}
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.alert {
+  position: relative;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+}
+
+.alert-info {
+  color: #0c5460;
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
 }
 </style>
