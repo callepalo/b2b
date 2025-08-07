@@ -2,6 +2,7 @@ services:
   - type: web
     name: dulpromax-backend
     env: python
+    pythonVersion: 3.9.16
     buildCommand: |
       python -m pip install --upgrade pip
       pip install --no-cache-dir -r requirements.txt
@@ -17,3 +18,5 @@ services:
         value: "true"
       - key: PYTHONDONTWRITEBYTECODE
         value: "1"
+      - key: PYTHONPATH
+        value: "/opt/render/project/src"
