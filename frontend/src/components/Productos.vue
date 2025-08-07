@@ -101,92 +101,265 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mt-4">
-    <h2>Gestión de Productos</h2>
+  <div class="productos-container">
+    <h2 class="titulo">Gestión de Productos</h2>
     
     <!-- Formulario de Producto -->
-    <div class="card mb-4">
-      <div class="card-header">
-        {{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}
-      </div>
-      <div class="card-body">
-        <form @submit.prevent="guardarProducto">
-          <div class="mb-3">
-            <label class="form-label">Nombre</label>
-            <input v-model="productoActual.nombre" type="text" class="form-control" required>
+    <div class="form-container">
+      <h3>{{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
+      <form @submit.prevent="guardarProducto" class="product-form">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input v-model="productoActual.nombre" type="text" required>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea v-model="productoActual.descripcion"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Precio</label>
+            <input v-model.number="productoActual.precio" type="number" step="0.01" required>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Descripción</label>
-            <textarea v-model="productoActual.descripcion" class="form-control"></textarea>
+          <div class="form-group">
+            <label>Stock</label>
+            <input v-model.number="productoActual.stock" type="number" required>
           </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Precio</label>
-              <input v-model.number="productoActual.precio" type="number" step="0.01" class="form-control" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Stock</label>
-              <input v-model.number="productoActual.stock" type="number" class="form-control" required>
-            </div>
-          </div>
-          <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">
-              {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
-            </button>
-            <button v-if="modoEdicion" type="button" class="btn btn-secondary" @click="limpiarFormulario">
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-save">
+            {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
+          </button>
+          <button v-if="modoEdicion" type="button" class="btn-cancel" @click="limpiarFormulario">
+            Cancelar
+          </button>
+        </div>
+      </form>
     </div>
 
     <!-- Tabla de Productos -->
-    <div class="card">
-      <div class="card-header">
-        Lista de Productos
+    <div class="table-container">
+      <h3>Lista de Productos</h3>
+      <div v-if="productos.length === 0" class="no-products">
+        No hay productos registrados.
       </div>
-      <div class="card-body">
-        <div v-if="productos.length === 0" class="alert alert-info">
-          No hay productos registrados.
-        </div>
-        <div v-else class="table-responsive">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Descripción</th>
-                <th>Precio</th>
-                <th>Stock</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="producto in productos" :key="producto.id">
-                <td>{{ producto.id }}</td>
-                <td>{{ producto.nombre }}</td>
-                <td>{{ producto.descripcion }}</td>
-                <td>${{ producto.precio.toFixed(2) }}</td>
-                <td>{{ producto.stock }}</td>
-                <td>
-                  <button @click="obtenerProducto(producto.id)" class="btn btn-sm btn-warning me-2">
-                    Editar
-                  </button>
-                  <button @click="eliminarProducto(producto.id)" class="btn btn-sm btn-danger">
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div v-else class="table-wrapper">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Precio</th>
+              <th>Stock</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="producto in productos" :key="producto.id">
+              <td>{{ producto.id }}</td>
+              <td>{{ producto.nombre }}</td>
+              <td>{{ producto.descripcion }}</td>
+              <td>${{ producto.precio.toFixed(2) }}</td>
+              <td>{{ producto.stock }}</td>
+              <td class="actions">
+                <button @click="obtenerProducto(producto.id)" class="btn-edit">
+                  Editar
+                </button>
+                <button @click="eliminarProducto(producto.id)" class="btn-delete">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.productos-container {
+  padding: 20px;
+}
+
+.titulo {
+  color: var(--secondary);
+  margin-bottom: 24px;
+  font-size: 1.8rem;
+}
+
+/* Estilos del formulario */
+.form-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.form-container h3 {
+  color: var(--secondary);
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+}
+
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+label {
+  font-weight: 500;
+  color: var(--secondary);
+}
+
+input, textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 1rem;
+  width: 100%;
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-save:hover {
+  opacity: 0.9;
+}
+
+.btn-cancel {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.btn-cancel:hover {
+  background-color: #e0e0e0;
+}
+
+/* Estilos de la tabla */
+.table-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table-container h3 {
+  color: var(--secondary);
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+}
+
+.no-products {
+  color: #666;
+  text-align: center;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.products-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.products-table th,
+.products-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.products-table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  color: var(--secondary);
+}
+
+.products-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-edit {
+  background-color: var(--warning);
+  color: white;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.btn-delete {
+  background-color: var(--danger);
+  color: white;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.btn-edit:hover, .btn-delete:hover {
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .products-table th,
+  .products-table td {
+    padding: 8px 12px;
+  }
+}
+
 .table th, .table td {
   vertical-align: middle;
 }

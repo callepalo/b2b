@@ -4,66 +4,66 @@ import Productos from './components/Productos.vue';
 
 <template>
   <div class="app">
-    <header class="bg-primary text-white p-3 mb-4">
-      <div class="container">
-        <h1>Panel de Administración</h1>
-      </div>
+    <header class="app-header">
+      <h1>Panel de Administración</h1>
     </header>
     
-    <main class="container">
+    <main class="app-main">
       <Productos />
     </main>
   </div>
 </template>
 
 <style>
-/* Estilos globales */
 :root {
-  --primary: #0d6efd;
-  --secondary: #6c757d;
-  --success: #198754;
-  --info: #0dcaf0;
-  --warning: #ffc107;
-  --danger: #dc3545;
-  --light: #f8f9fa;
-  --dark: #212529;
+  --primary: #42b983;
+  --secondary: #2c3e50;
+  --background: #f5f5f5;
+  --text: #2c3e50;
+  --border: #e0e0e0;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --danger: #f44336;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  line-height: 1.5;
-  color: #212529;
-  background-color: #f8f9fa;
-  margin: 0;
-  padding: 0;
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text);
+  background-color: var(--background);
+  line-height: 1.6;
 }
 
-.container {
+.app {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 15px;
+  padding: 20px;
 }
 
-.bg-primary {
-  background-color: var(--primary) !important;
+.app-header {
+  background-color: var(--primary);
+  color: white;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  border-radius: 4px;
 }
 
-.text-white {
-  color: white !important;
-}
-
-.p-3 {
-  padding: 1rem !important;
-}
-
-.mb-4 {
-  margin-bottom: 1.5rem !important;
-}
-
-h1 {
+.app-header h1 {
   margin: 0;
-  font-size: 1.75rem;
-  font-weight: 500;
-  line-height: 1.2;
+  font-size: 1.5rem;
+}
+
+.app-main {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>
