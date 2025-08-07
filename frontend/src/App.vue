@@ -1,101 +1,69 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-
-const API_URL = 'https://b2b-wa72.onrender.com';
-const productos = ref([]);
-
-// Obtener todos los productos
-const obtenerProductos = async () => {
-  try {
-    const { data } = await axios.get(`${API_URL}/productos`);
-    productos.value = data;
-  } catch (error) {
-    console.error('Error al obtener productos:', error);
-    alert('Error al cargar los productos');
-  }
-};
-
-// Cargar productos al montar el componente
-onMounted(() => {
-  obtenerProductos();
-});
+import Productos from './components/Productos.vue';
 </script>
 
 <template>
-  <div class="container mt-5">
-    <h1 class="mb-4">Lista de Productos</h1>
+  <div class="app">
+    <header class="bg-primary text-white p-3 mb-4">
+      <div class="container">
+        <h1>Panel de Administración</h1>
+      </div>
+    </header>
     
-    <div v-if="productos.length === 0" class="alert alert-info">
-      Cargando productos...
-    </div>
-    
-    <div v-else class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Precio</th>
-            <th>Stock</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="producto in productos" :key="producto.id">
-            <td>{{ producto.id }}</td>
-            <td>{{ producto.nombre }}</td>
-            <td>{{ producto.descripcion }}</td>
-            <td>${{ producto.precio }}</td>
-            <td>{{ producto.stock }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <main class="container">
+      <Productos />
+    </main>
   </div>
 </template>
 
 <style>
-/* Estilos básicos */
+/* Estilos globales */
+:root {
+  --primary: #0d6efd;
+  --secondary: #6c757d;
+  --success: #198754;
+  --info: #0dcaf0;
+  --warning: #ffc107;
+  --danger: #dc3545;
+  --light: #f8f9fa;
+  --dark: #212529;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 15px;
 }
 
-.table {
-  width: 100%;
-  margin-bottom: 1rem;
-  color: #212529;
+.bg-primary {
+  background-color: var(--primary) !important;
 }
 
-.table th,
-.table td {
-  padding: 0.75rem;
-  vertical-align: top;
-  border-top: 1px solid #dee2e6;
+.text-white {
+  color: white !important;
 }
 
-.table thead th {
-  vertical-align: bottom;
-  border-bottom: 2px solid #dee2e6;
+.p-3 {
+  padding: 1rem !important;
 }
 
-.table-striped tbody tr:nth-of-type(odd) {
-  background-color: rgba(0, 0, 0, 0.05);
+.mb-4 {
+  margin-bottom: 1.5rem !important;
 }
 
-.alert {
-  position: relative;
-  padding: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
-  border: 1px solid transparent;
-  border-radius: 0.25rem;
-}
-
-.alert-info {
-  color: #0c5460;
-  background-color: #d1ecf1;
-  border-color: #bee5eb;
+h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 500;
+  line-height: 1.2;
 }
 </style>
