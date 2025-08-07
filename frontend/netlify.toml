@@ -6,7 +6,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
 [dev]
   framework = "html"
   targetPort = 80
@@ -16,6 +15,14 @@
   NODE_VERSION = "18"
   NPM_VERSION = "9"
 
+[context.production.environment]
+  VITE_API_URL = "https://b2b-wa72.onrender.com"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
@@ -23,4 +30,10 @@
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://dulpromax-backend.onrender.com;"
+    Content-Security-Policy = "default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://b2b-wa72.onrender.com;"
+
+[[plugins]]
+  package = "@netlify/plugin-inject-env"
+  [plugins.inputs]
+    variable = "VITE_API_URL"
+    globalName = "API_BASE_URL"
