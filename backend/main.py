@@ -14,16 +14,20 @@ app = FastAPI(
 )
 
 # Configuración de CORS
+origins = [
+    "https://dulpromax.netlify.app",  # Producción
+    "http://localhost:3000",          # Frontend local
+    "http://localhost:8000",          # Desarrollo local
+    "https://b2b-wa72.onrender.com"   # Backend en Render
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://dulpromax.netlify.app",
-        "http://localhost:3000",  # Frontend local
-        "http://localhost:8000"   # Para desarrollo local
-    ],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["Content-Length", "X-Total-Count"],
 )
 
 # Modelo para la respuesta de health check
