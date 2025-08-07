@@ -31,9 +31,3 @@
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Content-Security-Policy = "default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://b2b-wa72.onrender.com;"
-
-[[plugins]]
-  package = "@netlify/plugin-inject-env"
-  [plugins.inputs]
-    variable = "VITE_API_URL"
-    globalName = "API_BASE_URL"
