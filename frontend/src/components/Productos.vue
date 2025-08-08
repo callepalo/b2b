@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+// Added error message ref for handling API errors
+const errorMensaje = ref('');
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://b2b-wa72.onrender.com/api/v1';
@@ -247,6 +249,7 @@ const limpiarFormulario = () => {
   modoEdicion.value = false;
   // Limpiar cualquier mensaje de error previo
   errorMensaje.value = '';
+// Ensure errorMensaje is defined
 };
 
 // Obtener imagen del producto basada en la categoría
