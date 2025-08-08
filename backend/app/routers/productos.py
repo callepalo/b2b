@@ -28,14 +28,26 @@ async def obtener_productos(
     categoria_id: Optional[str] = Query(None, description="Filtrar por ID de categoría")
 ):
     """Obtener todos los productos, opcionalmente filtrados por categoría"""
-    supabase = get_supabase()
-    query = supabase.table('productos').select('*')
-    
-    if categoria_id:
-        query = query.eq('categoria_id', categoria_id)
-    
-    response = query.execute()
-    return response.data if response.data else []
+    try:
+        supabase = get_supabase()
+        query = supabase.table('productos').select('*')
+        
+        if categoria_id:
+            query = query.eq('categoria_id', categoria_id)
+        
+        response = query.execute()
+        
+        # Asegurarse de que siempre devolvemos una lista
+        if not response.data:
+            return []
+            
+        return response.data
+    except Exception as e:
+        print(f"Error en obtener_productos: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener los productos: {str(e)}"
+        )
 
 @router.get("/{producto_id}", response_model=Producto)
 async def obtener_producto(producto_id: str):  # Cambiado de int a str
