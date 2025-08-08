@@ -1,15 +1,38 @@
 <script setup>
+import { ref } from 'vue';
 import Productos from './components/Productos.vue';
+import Categorias from './components/Categorias.vue';
+
+const currentView = ref('productos');
+
+const setView = (view) => {
+  currentView.value = view;
+  window.scrollTo(0, 0);
+};
 </script>
 
 <template>
   <div class="app">
     <header class="app-header">
       <h1>Panel de Administración</h1>
+      <nav class="main-nav">
+        <button 
+          @click="setView('productos')" 
+          :class="{ active: currentView === 'productos' }"
+        >
+          Productos
+        </button>
+        <button 
+          @click="setView('categorias')" 
+          :class="{ active: currentView === 'categorias' }"
+        >
+          Categorías
+        </button>
+      </nav>
     </header>
     
     <main class="app-main">
-      <Productos />
+      <component :is="currentView === 'productos' ? Productos : Categorias" />
     </main>
   </div>
 </template>
@@ -24,6 +47,10 @@ import Productos from './components/Productos.vue';
   --success: #4caf50;
   --warning: #ff9800;
   --danger: #f44336;
+  --nav-bg: #2c3e50;
+  --nav-hover: #3a5169;
+  --nav-active: #42b983;
+  --text-light: #ffffff;
 }
 
 * {
@@ -48,16 +75,47 @@ body {
 }
 
 .app-header {
-  background-color: var(--primary);
-  color: white;
+  background-color: var(--nav-bg);
+  color: var(--text-light);
   padding: 1rem;
   margin-bottom: 2rem;
   border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .app-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
+  margin: 0 0 1rem 0;
+  font-size: 1.8rem;
+  text-align: center;
+  color: var(--text-light);
+}
+
+.main-nav {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.main-nav button {
+  background-color: transparent;
+  color: var(--text-light);
+  border: 1px solid var(--text-light);
+  border-radius: 4px;
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.main-nav button:hover {
+  background-color: var(--nav-hover);
+}
+
+.main-nav button.active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  font-weight: bold;
 }
 
 .app-main {
