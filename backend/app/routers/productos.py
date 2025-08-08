@@ -12,6 +12,7 @@ class ProductoBase(BaseModel):
     precio: float = Field(..., gt=0, description="El precio debe ser mayor que cero")
     stock: int = Field(..., ge=0, description="El stock no puede ser negativo")
     categoria_id: Optional[str] = Field(None, description="ID de la categoría a la que pertenece el producto")
+    imagen_url: Optional[str] = Field(None, description="URL de la imagen del producto")
 
 class ProductoCreate(ProductoBase):
     pass
