@@ -5,7 +5,7 @@ from typing import Optional
 import os
 
 # Importar routers
-from app.routers import productos
+from app.routers import productos, categorias
 
 app = FastAPI(
     title="Dulpromax API",
@@ -38,6 +38,7 @@ class HealthCheckResponse(BaseModel):
 
 # Incluir routers
 app.include_router(productos.router)
+app.include_router(categorias.router)
 
 # Endpoint raíz
 @app.get("/")
