@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 from pydantic import BaseModel, Field, field_validator
 from config.supabase import get_supabase
 
-router = APIRouter(prefix="/productos", tags=["productos"])
+router = APIRouter(tags=["productos"])
 
 # Modelos Pydantic para Productos
 class ProductoBase(BaseModel):

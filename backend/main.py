@@ -36,9 +36,9 @@ class HealthCheckResponse(BaseModel):
     version: str
     environment: str
 
-# Incluir routers con prefijo /api/v1
-app.include_router(productos.router, prefix="/api/v1")
-app.include_router(categorias.router, prefix="/api/v1")
+# Incluir routers con sus respectivos prefijos
+app.include_router(productos.router, prefix="/api/v1/productos")
+app.include_router(categorias.router, prefix="/api/v1/categorias")
 
 # Endpoint raíz
 @app.get("/")
