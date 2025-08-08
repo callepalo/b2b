@@ -1,27 +1,9 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import List, Optional, Union
-from pydantic import BaseModel, Field, field_validator
+from app.models import ProductoBase, ProductoCreate, Producto
 from config.supabase import get_supabase
 
 router = APIRouter(tags=["productos"])
-
-# Modelos Pydantic para Productos
-class ProductoBase(BaseModel):
-    nombre: str = Field(..., min_length=2, max_length=100)
-    descripcion: Optional[str] = Field(None, max_length=500)
-    precio: float = Field(..., gt=0, description="El precio debe ser mayor que cero")
-    stock: int = Field(..., ge=0, description="El stock no puede ser negativo")
-    categoria_id: Optional[str] = Field(None, description="ID de la categoría a la que pertenece el producto")
-    imagen_url: Optional[str] = Field(None, description="URL de la imagen del producto")
-
-class ProductoCreate(ProductoBase):
-    pass
-
-class Producto(ProductoBase):
-    id: str  # Cambiado de int a str para soportar UUID
-
-    class Config:
-        from_attributes = True
 
 # Endpoints
 @router.get("", response_model=List[Producto], response_model_exclude_none=True)
@@ -129,7 +111,7 @@ async def crear_producto(producto: ProductoCreate):
         )
     
     # Crear el producto
-    response = supabase.table('productos').insert(producto.dict()).execute()
+    response = supabase.table('productos').insert(producto.model_dump()).execute()
     
     if not response.data:
         raise HTTPException(
@@ -180,7 +162,7 @@ async def actualizar_producto(producto_id: str, producto: ProductoCreate):  # Ca
             detail="Ya existe otro producto con este nombre"
         )
     
-    response = supabase.table('productos').update(producto.dict()).eq('id', producto_id).execute()
+    response = supabase.table('productos').update(producto.model_dump()).eq('id', producto_id).execute()
     
     if not response.data:
         raise HTTPException(

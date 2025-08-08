@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 
-const API_URL = 'https://b2b-wa72.onrender.com/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || 'https://b2b-wa72.onrender.com/api/v1';
 const productos = ref([]);
 const productosFiltrados = ref([]);
 const categorias = ref([]);
@@ -89,8 +89,13 @@ const crearProducto = async () => {
     console.log('Creando producto con datos:', JSON.stringify(productoActual.value, null, 2));
     
     // Asegurarse de que los campos numéricos sean números
+    // Excluir el campo id del payload, ya que el backend lo genera automáticamente
+    const { id, ...baseDatos } = productoActual.value;
+    // Convertir campos y manejar valores vacíos
     const datosProducto = {
-      ...productoActual.value,
+      ...baseDatos,
+      // Si categoria_id es una cadena vacía, enviamos null
+      categoria_id: baseDatos.categoria_id && baseDatos.categoria_id.trim() !== '' ? baseDatos.categoria_id : null,
       precio: parseFloat(productoActual.value.precio),
       stock: parseInt(productoActual.value.stock, 10)
     };
@@ -134,21 +139,15 @@ const actualizarProducto = async () => {
     console.log('Datos a enviar:', productoActual.value);
     
     const response = await axios.put(
-      `${API_URL}/productos/${productoActual.value.id}`, 
+      `${API_URL}/productos/${productoActual.value.id}`,
       productoActual.value
     );
-    
     console.log('Respuesta del servidor:', response.data);
     console.log('Status de respuesta:', response.status);
-    
-    // Verificar que la respuesta sea exitosa (status 200 para actualización)
-    if (response.status === 200 && response.data) {
-      alert('Producto actualizado correctamente');
-      await obtenerProductos();
-      cerrarFormulario();
-    } else {
-      throw new Error(`Error en la respuesta del servidor. Status: ${response.status}`);
-    }
+    // Si no se lanza excepción, consideramos la actualización exitosa
+    alert('Producto actualizado correctamente');
+    await obtenerProductos();
+    cerrarFormulario();
   } catch (error) {
     console.error('Error al actualizar el producto:', error);
     

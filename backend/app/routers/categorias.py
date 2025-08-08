@@ -2,22 +2,9 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from config.supabase import get_supabase
+from app.models import CategoriaBase, CategoriaCreate, Categoria
 
 router = APIRouter(tags=["categorias"])
-
-# Modelo Pydantic para Categorías
-class CategoriaBase(BaseModel):
-    nombre: str = Field(..., min_length=2, max_length=50)
-    descripcion: Optional[str] = None
-
-class CategoriaCreate(CategoriaBase):
-    pass
-
-class Categoria(CategoriaBase):
-    id: str  # UUID
-    
-    class Config:
-        from_attributes = True
 
 # Endpoints para Categorías
 @router.get("", response_model=List[Categoria])
