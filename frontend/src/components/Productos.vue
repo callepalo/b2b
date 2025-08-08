@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 
 const API_URL = 'https://b2b-wa72.onrender.com';
 const productos = ref([]);
+const productosFiltrados = ref([]);
 const categorias = ref([]);
 const productoActual = ref({
   id: null,
@@ -14,6 +15,16 @@ const productoActual = ref({
   categoria_id: ''
 });
 const modoEdicion = ref(false);
+const mostrarFormulario = ref(false);
+const busqueda = ref('');
+
+// Imágenes de ejemplo para las categorías
+const imagenesCategorias = {
+  'cereales': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=880&q=80',
+  'caramelos': 'https://images.unsplash.com/photo-1575224526795-35d2411f9b4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=880&q=80',
+  'panaderia': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1472&q=80',
+  'default': 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
+};
 
 // Obtener todas las categorías
 const obtenerCategorias = async () => {
@@ -37,6 +48,7 @@ const obtenerProductos = async () => {
   try {
     const { data } = await axios.get(`${API_URL}/productos`);
     productos.value = data;
+    productosFiltrados.value = [...data];
   } catch (error) {
     console.error('Error al obtener productos:', error);
     alert('Error al cargar los productos');
@@ -49,6 +61,7 @@ const obtenerProducto = async (id) => {
     const { data } = await axios.get(`${API_URL}/productos/${id}`);
     productoActual.value = data;
     modoEdicion.value = true;
+    mostrarFormulario.value = true;
   } catch (error) {
     console.error('Error al obtener el producto:', error);
     alert('Error al cargar el producto');
@@ -59,8 +72,8 @@ const obtenerProducto = async (id) => {
 const crearProducto = async () => {
   try {
     await axios.post(`${API_URL}/productos`, productoActual.value);
-    limpiarFormulario();
     await obtenerProductos();
+    cerrarFormulario();
   } catch (error) {
     console.error('Error al crear el producto:', error);
     alert('Error al crear el producto');
@@ -71,8 +84,8 @@ const crearProducto = async () => {
 const actualizarProducto = async () => {
   try {
     await axios.put(`${API_URL}/productos/${productoActual.value.id}`, productoActual.value);
-    limpiarFormulario();
     await obtenerProductos();
+    cerrarFormulario();
   } catch (error) {
     console.error('Error al actualizar el producto:', error);
     alert('Error al actualizar el producto');
@@ -80,9 +93,13 @@ const actualizarProducto = async () => {
 };
 
 // Eliminar un producto
+const confirmarEliminar = (id) => {
+  if (confirm('¿Estás seguro de eliminar este producto?')) {
+    eliminarProducto(id);
+  }
+};
+
 const eliminarProducto = async (id) => {
-  if (!confirm('¿Estás seguro de eliminar este producto?')) return;
-  
   try {
     await axios.delete(`${API_URL}/productos/${id}`);
     await obtenerProductos();
@@ -101,6 +118,16 @@ const guardarProducto = () => {
   }
 };
 
+// Manejo del formulario
+const abrirFormulario = () => {
+  mostrarFormulario.value = true;
+};
+
+const cerrarFormulario = () => {
+  mostrarFormulario.value = false;
+  limpiarFormulario();
+};
+
 // Limpiar formulario
 const limpiarFormulario = () => {
   productoActual.value = {
@@ -108,9 +135,42 @@ const limpiarFormulario = () => {
     nombre: '',
     descripcion: '',
     precio: 0,
-    stock: 0
+    stock: 0,
+    categoria_id: ''
   };
   modoEdicion.value = false;
+};
+
+// Obtener imagen del producto basada en la categoría
+const obtenerImagenProducto = (producto) => {
+  const categoria = categorias.value.find(cat => cat.id === producto.categoria_id);
+  if (categoria) {
+    const nombreCategoria = categoria.nombre.toLowerCase();
+    return imagenesCategorias[nombreCategoria] || imagenesCategorias.default;
+  }
+  return imagenesCategorias.default;
+};
+
+// Filtrar productos por búsqueda
+const filtrarProductos = () => {
+  if (!busqueda.value.trim()) {
+    productosFiltrados.value = [...productos.value];
+    return;
+  }
+  
+  const busquedaLower = busqueda.value.toLowerCase();
+  productosFiltrados.value = productos.value.filter(producto => {
+    return (
+      producto.nombre.toLowerCase().includes(busquedaLower) ||
+      (producto.descripcion && producto.descripcion.toLowerCase().includes(busquedaLower)) ||
+      obtenerNombreCategoria(producto.categoria_id).toLowerCase().includes(busquedaLower)
+    );
+  });
+};
+
+// Alias para editar producto
+const editarProducto = (id) => {
+  obtenerProducto(id);
 };
 
 // Cargar datos al montar el componente
@@ -124,273 +184,635 @@ onMounted(async () => {
 
 <template>
   <div class="productos-container">
-    <h2 class="titulo">Gestión de Productos</h2>
-    
-    <!-- Formulario de Producto -->
-    <div class="form-container">
-      <h3>{{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
-      <form @submit.prevent="guardarProducto" class="form-container">
-        <div class="form-group">
-          <label for="nombre">Nombre:</label>
-          <input type="text" id="nombre" v-model="productoActual.nombre" required>
+    <!-- Botón flotante para agregar producto -->
+    <button class="add-product-btn" @click="abrirFormulario">
+      <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Formulario flotante -->
+    <div class="form-overlay" v-if="mostrarFormulario" @click.self="cerrarFormulario">
+      <div class="form-container">
+        <div class="form-header">
+          <h3>{{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
+          <button class="close-btn" @click="cerrarFormulario">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-        <div class="form-group">
-          <label for="descripcion">Descripción:</label>
-          <textarea id="descripcion" v-model="productoActual.descripcion"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="precio">Precio:</label>
-          <input type="number" id="precio" v-model.number="productoActual.precio" min="0" step="0.01" required>
-        </div>
-        <div class="form-group">
-          <label for="stock">Stock:</label>
-          <input type="number" id="stock" v-model.number="productoActual.stock" min="0" required>
-        </div>
-        <div class="form-group">
-          <label for="categoria">Categoría:</label>
-          <select id="categoria" v-model="productoActual.categoria_id" required>
-            <option value="" disabled>Seleccione una categoría</option>
-            <option v-for="categoria in categorias" :key="categoria.id" :value="categoria.id">
-              {{ categoria.nombre }}
-            </option>
-          </select>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn-save">{{ modoEdicion ? 'Actualizar' : 'Guardar' }}</button>
-          <button type="button" @click="limpiarFormulario" class="btn-cancel">Cancelar</button>
-        </div>
-      </form>
+        <form @submit.prevent="guardarProducto" class="product-form">
+          <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" v-model="productoActual.nombre" required>
+          </div>
+          <div class="form-group">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" v-model="productoActual.descripcion" rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="precio">Precio ($)</label>
+              <input type="number" id="precio" v-model.number="productoActual.precio" min="0" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label for="stock">Stock</label>
+              <input type="number" id="stock" v-model.number="productoActual.stock" min="0" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="categoria">Categoría</label>
+            <select id="categoria" v-model="productoActual.categoria_id" required>
+              <option value="" disabled>Seleccione una categoría</option>
+              <option v-for="categoria in categorias" :key="categoria.id" :value="categoria.id">
+                {{ categoria.nombre }}
+              </option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="button" @click="cerrarFormulario" class="btn btn-outline">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary">
+              {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <!-- Tabla de Productos -->
-    <div class="table-container">
-      <h3>Lista de Productos</h3>
-      <div v-if="productos.length === 0" class="no-products">
-        No hay productos registrados.
+    <!-- Filtros y búsqueda -->
+    <div class="filters-container">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input 
+          type="text" 
+          v-model="busqueda" 
+          placeholder="Buscar productos..."
+          @input="filtrarProductos"
+        >
       </div>
-      <div v-else class="table-wrapper">
-        <table class="products-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Precio</th>
-              <th>Stock</th>
-              <th>Categoría</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="producto in productos" :key="producto.id">
-              <td>{{ producto.nombre }}</td>
-              <td>{{ producto.descripcion || 'N/A' }}</td>
-              <td>${{ producto.precio.toFixed(2) }}</td>
-              <td>{{ producto.stock }}</td>
-              <td>{{ obtenerNombreCategoria(producto.categoria_id) }}</td>
-              <td class="actions">
-                <button @click="obtenerProducto(producto.id)" class="btn-edit">
-                  Editar
+      <div class="filter-actions">
+        <button class="btn btn-outline" @click="abrirFormulario">
+          <i class="fas fa-plus"></i> Nuevo Producto
+        </button>
+      </div>
+    </div>
+
+    <!-- Listado de productos en tarjetas -->
+    <div class="products-grid">
+      <div v-if="productosFiltrados.length === 0" class="no-products">
+        <i class="fas fa-box-open"></i>
+        <p>No se encontraron productos</p>
+        <button class="btn btn-primary" @click="abrirFormulario">
+          Agregar Producto
+        </button>
+      </div>
+
+      <div v-else class="product-cards">
+        <div v-for="producto in productosFiltrados" :key="producto.id" class="product-card">
+          <div class="product-image">
+            <img :src="obtenerImagenProducto(producto)" :alt="producto.nombre">
+            <div class="product-badge" :class="{'in-stock': producto.stock > 0, 'out-of-stock': producto.stock <= 0}">
+              {{ producto.stock > 0 ? 'En stock' : 'Agotado' }}
+            </div>
+          </div>
+          <div class="product-info">
+            <div class="product-category">
+              {{ obtenerNombreCategoria(producto.categoria_id) }}
+            </div>
+            <h3 class="product-name">{{ producto.nombre }}</h3>
+            <p class="product-description" v-if="producto.descripcion">
+              {{ producto.descripcion }}
+            </p>
+            <div class="product-footer">
+              <span class="product-price">${{ producto.precio.toFixed(2) }}</span>
+              <div class="product-actions">
+                <button class="action-btn edit" @click="editarProducto(producto.id)" title="Editar">
+                  <i class="fas fa-edit"></i>
                 </button>
-                <button @click="eliminarProducto(producto.id)" class="btn-delete">
-                  Eliminar
+                <button class="action-btn delete" @click="confirmarEliminar(producto.id)" title="Eliminar">
+                  <i class="fas fa-trash"></i>
                 </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* Base Styles */
 .productos-container {
-  padding: 20px;
+  padding: 2rem 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
 }
 
-.titulo {
-  color: var(--secondary);
-  margin-bottom: 24px;
-  font-size: 1.8rem;
+/* Floating Action Button */
+.add-product-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: var(--text);
+  border: none;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.3s ease;
 }
 
-/* Estilos del formulario */
+.add-product-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Form Overlay */
+.form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  backdrop-filter: blur(3px);
+}
+
+/* Form Container */
 .form-container {
   background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
 }
 
-.form-container h3 {
-  color: var(--secondary);
-  margin-bottom: 20px;
-  font-size: 1.4rem;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.product-form {
+/* Form Header */
+.form-header {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.form-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: var(--danger);
+}
+
+/* Form Styles */
+.product-form {
+  padding: 1.5rem;
 }
 
 .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fff;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+  outline: none;
+}
+
+.form-group textarea {
+  min-height: 100px;
+  resize: vertical;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
-label {
-  font-weight: 500;
-  color: var(--secondary);
-}
-
-input, textarea {
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  font-size: 1rem;
-  width: 100%;
-}
-
-textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
+/* Form Buttons */
 .form-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 10px;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
 }
 
-button {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 4px;
-  font-weight: 500;
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px solid transparent;
+}
+
+.btn i {
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--text);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background-color: #e6c200;
+  border-color: #e6c200;
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-outline:hover {
+  background-color: #f8f8f8;
+  border-color: #ddd;
+}
+
+/* Search and Filter */
+.filters-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+  min-width: 250px;
+}
+
+.search-box i {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.search-box input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  background-color: #fff;
+}
+
+.search-box input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+  outline: none;
+}
+
+/* Products Grid */
+.products-grid {
+  margin-top: 2rem;
+}
+
+.products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.products-title {
+  font-size: 1.75rem;
+  color: var(--text);
+  margin: 0;
+  font-weight: 700;
+}
+
+.products-count {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.product-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Product Card */
+.product-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--border);
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.product-image {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.05);
+}
+
+.product-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 1;
+}
+
+.in-stock {
+  background-color: rgba(76, 175, 80, 0.9);
+  color: white;
+}
+
+.out-of-stock {
+  background-color: rgba(244, 67, 54, 0.9);
+  color: white;
+}
+
+.product-info {
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-category {
+  font-size: 0.85rem;
+  color: var(--primary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.product-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.product-description {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.product-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.product-stock {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.product-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.btn-save {
-  background-color: var(--primary);
-  color: white;
+.btn-icon:hover {
+  background: #f8f9fa;
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
-.btn-save:hover {
-  opacity: 0.9;
+.btn-icon.delete:hover {
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
-.btn-cancel {
-  background-color: #f0f0f0;
-  color: #333;
-}
-
-.btn-cancel:hover {
-  background-color: #e0e0e0;
-}
-
-/* Estilos de la tabla */
-.table-container {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.table-container h3 {
-  color: var(--secondary);
-  margin-bottom: 20px;
-  font-size: 1.4rem;
-}
-
+/* No Products Message */
 .no-products {
-  color: #666;
+  grid-column: 1 / -1;
   text-align: center;
-  padding: 20px;
-  background: #f9f9f9;
-  border-radius: 4px;
+  padding: 3rem 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 1.5rem;
 }
 
-.table-wrapper {
-  overflow-x: auto;
+.no-products h3 {
+  color: var(--text);
+  margin-bottom: 0.5rem;
 }
 
-.products-table {
-  width: 100%;
-  border-collapse: collapse;
+.no-products p {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
 }
 
-.products-table th,
-.products-table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
+/* Responsive Styles */
+@media (max-width: 1200px) {
+  .product-cards {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
 }
 
-.products-table th {
-  background-color: #f5f5f5;
-  font-weight: 600;
-  color: var(--secondary);
+@media (max-width: 992px) {
+  .products-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .search-box {
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
-.products-table tbody tr:hover {
-  background-color: #f9f9f9;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-edit {
-  background-color: var(--warning);
-  color: white;
-  padding: 6px 12px;
-  font-size: 0.85rem;
-}
-
-.btn-delete {
-  background-color: var(--danger);
-  color: white;
-  padding: 6px 12px;
-  font-size: 0.85rem;
-}
-
-.btn-edit:hover, .btn-delete:hover {
-  opacity: 0.9;
-}
-
-/* Responsive */
 @media (max-width: 768px) {
+  .productos-container {
+    padding: 1.5rem 1rem;
+  }
+  
   .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+  
+  .product-cards {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+  
+  .product-footer {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .product-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-cards {
     grid-template-columns: 1fr;
   }
   
-  .actions {
-    flex-direction: column;
+  .form-container {
+    margin: 1rem;
+    max-height: 90vh;
   }
   
-  .products-table th,
-  .products-table td {
-    padding: 8px 12px;
+  .product-card {
+    max-width: 100%;
   }
-}
-
-.table th, .table td {
-  vertical-align: middle;
-}
-
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
+  
+  .btn-icon {
+    width: 32px;
+    height: 32px;
+  }
 }
 </style>
