@@ -100,15 +100,10 @@ const crearProducto = async () => {
     const response = await axios.post(`${API_URL}/productos`, datosProducto);
     console.log('Respuesta del servidor:', response.data);
     console.log('Status de respuesta:', response.status);
-    
-    // Verificar que la respuesta sea exitosa (status 201 para creación)
-    if (response.status === 201 && response.data) {
-      await obtenerProductos();
-      cerrarFormulario();
-      alert('Producto creado exitosamente');
-    } else {
-      throw new Error(`Error en la respuesta del servidor. Status: ${response.status}`);
-    }
+    // Si no se lanza excepción, consideramos la creación exitosa
+    await obtenerProductos();
+    cerrarFormulario();
+    alert('Producto creado exitosamente');
   } catch (error) {
     console.error('Error al crear el producto:', error);
     
