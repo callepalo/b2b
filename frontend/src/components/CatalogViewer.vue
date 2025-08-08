@@ -180,16 +180,26 @@ const loadCatalog = async () => {
     loading.value = true
     error.value = null
     
+    console.log('Loading catalog from:', 'https://b2b-wa72.onrender.com/api/v1')
+    
     const [categoriesData, productsData] = await Promise.all([
       categoriesService.getAll(),
       productsService.getAll()
     ])
+    
+    console.log('Categories loaded:', categoriesData)
+    console.log('Products loaded:', productsData)
     
     categories.value = categoriesData
     products.value = productsData
   } catch (err) {
     error.value = err.message || 'Error al cargar el catálogo'
     console.error('Error loading catalog:', err)
+    console.error('Error details:', {
+      message: err.message,
+      stack: err.stack,
+      url: 'https://b2b-wa72.onrender.com/api/v1'
+    })
   } finally {
     loading.value = false
   }

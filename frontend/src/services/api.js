@@ -35,7 +35,8 @@ class ApiService {
 // Servicios específicos
 class CategoriesService extends ApiService {
   async getAll() {
-    return this.get('/categories');
+    const response = await this.get('/categories');
+    return response.data || response; // Handle both direct response and wrapped response
   }
 
   async getById(id) {
@@ -49,7 +50,8 @@ class CategoriesService extends ApiService {
 
 class ProductsService extends ApiService {
   async getAll(params = {}) {
-    return this.get('/products', params);
+    const response = await this.get('/products', params);
+    return response.data || response; // Handle both direct response and wrapped response
   }
 
   async getById(id) {
