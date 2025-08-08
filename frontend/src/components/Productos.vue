@@ -99,13 +99,15 @@ const crearProducto = async () => {
     
     const response = await axios.post(`${API_URL}/productos`, datosProducto);
     console.log('Respuesta del servidor:', response.data);
+    console.log('Status de respuesta:', response.status);
     
-    if (response.data) {
+    // Verificar que la respuesta sea exitosa (status 201 para creación)
+    if (response.status === 201 && response.data) {
       await obtenerProductos();
       cerrarFormulario();
       alert('Producto creado exitosamente');
     } else {
-      throw new Error('No se recibieron datos de respuesta del servidor');
+      throw new Error(`Error en la respuesta del servidor. Status: ${response.status}`);
     }
   } catch (error) {
     console.error('Error al crear el producto:', error);
@@ -142,13 +144,15 @@ const actualizarProducto = async () => {
     );
     
     console.log('Respuesta del servidor:', response.data);
+    console.log('Status de respuesta:', response.status);
     
-    if (response.data) {
+    // Verificar que la respuesta sea exitosa (status 200 para actualización)
+    if (response.status === 200 && response.data) {
       alert('Producto actualizado correctamente');
       await obtenerProductos();
       cerrarFormulario();
     } else {
-      throw new Error('No se recibieron datos de respuesta del servidor');
+      throw new Error(`Error en la respuesta del servidor. Status: ${response.status}`);
     }
   } catch (error) {
     console.error('Error al actualizar el producto:', error);
