@@ -121,9 +121,10 @@ const emit = defineEmits(['search'])
 }
 
 .header {
-  background: var(--color-white);
-  border-bottom: 1px solid var(--color-gray-200);
-  box-shadow: var(--shadow-sm);
+  background: #fef3c7;
+  border-bottom: 2px solid #fbbf24;
+  padding: 1rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
@@ -135,9 +136,10 @@ const emit = defineEmits(['search'])
 }
 
 .logo h1 {
-  font-size: var(--text-xl);
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--color-primary);
+  color: #d97706;
+  text-decoration: none;
   margin: 0;
 }
 
@@ -191,11 +193,11 @@ const emit = defineEmits(['search'])
 
 .search-input {
   width: 100%;
-  padding: var(--spacing-2) var(--spacing-4);
-  padding-right: var(--spacing-10);
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--border-radius-lg);
-  font-size: var(--text-sm);
+  padding: 0.75rem 1rem;
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: white;
   transition: var(--transition);
 }
 
@@ -240,9 +242,9 @@ const emit = defineEmits(['search'])
 
 .footer {
   margin-top: auto;
-  background: var(--color-gray-50);
-  border-top: 1px solid var(--color-gray-200);
-  padding: var(--spacing-12) 0;
+  background: #fef3c7;
+  border-top: 2px solid #fbbf24;
+  padding: 2rem 0;
 }
 
 .footer-content {
@@ -271,32 +273,54 @@ const emit = defineEmits(['search'])
 }
 
 .footer-section a {
-  color: var(--color-gray-600);
+  color: #92400e;
   text-decoration: none;
-  transition: var(--transition);
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .footer-section a:hover {
-  color: var(--color-primary);
+  color: #d97706;
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+  .header-content {
+    padding: 0 1rem;
+  }
+  
+  .main-content {
+    padding: 1rem;
+  }
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-4);
+    gap: 1rem;
+    padding: 0 1rem;
   }
   
-  .nav {
-    flex-direction: column;
-    gap: var(--spacing-2);
+  nav {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
   }
   
   .search-bar {
-    width: 100%;
+    max-width: 100%;
   }
   
+  .logo {
+    font-size: 1.25rem;
+  }
+  
+  footer {
+    padding: 1.5rem 1rem;
+  }
+}
+
+@media (max-width: 768px) {
   .footer-content {
     grid-template-columns: 1fr;
     gap: var(--spacing-6);
