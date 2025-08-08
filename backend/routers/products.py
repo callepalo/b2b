@@ -69,7 +69,7 @@ MOCK_PRODUCTS = [
         "sku": "BAR-PRO-001",
         "category_id": "550e8400-e29b-41d4-a716-446655440002",
         "images": [{"url": "https://example.com/barra.jpg", "alt": "Barra de Proteína"}],
-        "attributes": {"proteina": "15g", "calorias": "180", "sin_gluten": true},
+        "attributes": {"proteina": "15g", "calorias": "180", "sin_gluten": True},
         "is_active": True,
         "is_featured": False,
         "created_at": "2024-01-01T00:00:00Z",
