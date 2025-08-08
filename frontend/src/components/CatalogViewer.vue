@@ -142,7 +142,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { CategoriesService, ProductsService } from '../services/api.js'
+import { categoriesService, productsService } from '../services/api.js'
 
 // Estado
 const categories = ref([])
@@ -181,8 +181,8 @@ const loadCatalog = async () => {
     error.value = null
     
     const [categoriesData, productsData] = await Promise.all([
-      CategoriesService.getAll(),
-      ProductsService.getAll()
+      categoriesService.getAll(),
+      productsService.getAll()
     ])
     
     categories.value = categoriesData
