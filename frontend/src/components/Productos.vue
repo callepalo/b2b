@@ -86,12 +86,47 @@ const obtenerProducto = async (id) => {
 // Crear un nuevo producto
 const crearProducto = async () => {
   try {
-    await axios.post(`${API_URL}/productos`, productoActual.value);
-    await obtenerProductos();
-    cerrarFormulario();
+    console.log('Creando producto con datos:', JSON.stringify(productoActual.value, null, 2));
+    
+    // Asegurarse de que los campos numéricos sean números
+    const datosProducto = {
+      ...productoActual.value,
+      precio: parseFloat(productoActual.value.precio),
+      stock: parseInt(productoActual.value.stock, 10)
+    };
+    
+    console.log('Datos del producto a enviar:', JSON.stringify(datosProducto, null, 2));
+    
+    const response = await axios.post(`${API_URL}/productos`, datosProducto);
+    console.log('Respuesta del servidor:', response.data);
+    
+    if (response.data) {
+      await obtenerProductos();
+      cerrarFormulario();
+      alert('Producto creado exitosamente');
+    } else {
+      throw new Error('No se recibieron datos de respuesta del servidor');
+    }
   } catch (error) {
     console.error('Error al crear el producto:', error);
-    alert('Error al crear el producto');
+    
+    let errorMessage = 'Error al crear el producto';
+    
+    if (error.response) {
+      console.error('Detalles del error del servidor:', error.response.data);
+      
+      if (error.response.status === 400) {
+        errorMessage = error.response.data?.detail || 'Datos de entrada inválidos';
+      } else if (error.response.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+    } else if (error.request) {
+      errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+    }
+    
+    alert(errorMessage);
   }
 };
 
@@ -206,9 +241,14 @@ const limpiarFormulario = () => {
     descripcion: '',
     precio: 0,
     stock: 0,
-    categoria_id: ''
+    categoria_id: '',
+    // Incluir todos los campos que espera el backend, incluso si son opcionales
+    imagen_url: null,
+    // Agregar cualquier otro campo que pueda ser necesario
   };
   modoEdicion.value = false;
+  // Limpiar cualquier mensaje de error previo
+  errorMensaje.value = '';
 };
 
 // Obtener imagen del producto basada en la categoría

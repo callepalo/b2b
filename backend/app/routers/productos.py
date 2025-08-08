@@ -34,7 +34,8 @@ async def obtener_productos(
         print("Cliente de Supabase obtenido")
         
         print("Preparando consulta a la tabla 'productos'...")
-        query = supabase.table('productos').select('*')
+        # Incluir la relación con categorías en la consulta
+        query = supabase.table('productos').select('*, categorias(*)')
         
         if categoria_id:
             print(f"Filtrando por categoría_id: {categoria_id}")
@@ -48,9 +49,16 @@ async def obtener_productos(
         if not response.data:
             print("No se encontraron productos")
             return []
+        
+        # Formatear la respuesta para incluir la categoría
+        productos_formateados = []
+        for producto in response.data:
+            if 'categorias' in producto and producto['categorias']:
+                producto['categoria'] = producto.pop('categorias')
+            productos_formateados.append(producto)
             
-        print(f"Productos encontrados: {len(response.data)}")
-        return response.data
+        print(f"Productos encontrados: {len(productos_formateados)}")
+        return productos_formateados
         
     except Exception as e:
         import traceback
@@ -76,9 +84,14 @@ async def obtener_productos(
 
 @router.get("/{producto_id}", response_model=Producto)
 async def obtener_producto(producto_id: str):  # Cambiado de int a str
-    """Obtener un producto por ID"""
+    """Obtener un producto por ID con su categoría"""
     supabase = get_supabase()
-    response = supabase.table('productos').select('*').eq('id', producto_id).execute()
+    
+    # Obtener el producto con la relación de categoría
+    response = supabase.table('productos')\
+        .select('*, categorias(*)')\
+        .eq('id', producto_id)\
+        .execute()
     
     if not response.data:
         raise HTTPException(
@@ -86,7 +99,12 @@ async def obtener_producto(producto_id: str):  # Cambiado de int a str
             detail=f"Producto con ID {producto_id} no encontrado"
         )
     
-    return response.data[0]
+    # Formatear la respuesta para incluir la categoría
+    producto = response.data[0]
+    if 'categorias' in producto and producto['categorias']:
+        producto['categoria'] = producto.pop('categorias')
+    
+    return producto
 
 @router.post("/", response_model=Producto, status_code=status.HTTP_201_CREATED)
 async def crear_producto(producto: ProductoCreate):
