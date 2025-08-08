@@ -119,8 +119,21 @@ async def crear_producto(producto: ProductoCreate):
         )
     
     # Obtener el producto recién creado con sus relaciones
-    nuevo_producto = supabase.table('productos').select('*, categorias(*)').eq('id', response.data[0]['id']).execute()
-    return nuevo_producto.data[0] if nuevo_producto.data else response.data[0]
+    nuevo_producto = supabase.table('productos')\
+        .select('*, categorias!inner(*)')\
+        .eq('id', response.data[0]['id'])\
+        .execute()
+    
+    if not nuevo_producto.data:
+        # Si no se pudo obtener con la relación, devolver solo los datos básicos
+        return response.data[0]
+        
+    # Asegurarse de que la categoría esté en el formato esperado
+    producto_con_categoria = nuevo_producto.data[0]
+    if 'categorias' in producto_con_categoria and producto_con_categoria['categorias']:
+        producto_con_categoria['categoria'] = producto_con_categoria.pop('categorias')
+    
+    return producto_con_categoria
 
 @router.put("/{producto_id}", response_model=Producto)
 async def actualizar_producto(producto_id: str, producto: ProductoCreate):  # Cambiado de int a str
