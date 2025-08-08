@@ -30,21 +30,57 @@ class ApiService {
     }
     return response.json();
   }
+
+  async put(endpoint, data) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async delete(endpoint) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  }
 }
 
 // Servicios específicos
 class CategoriesService extends ApiService {
+  constructor() {
+    super();
+    this.endpoint = '/categories';
+  }
+
   async getAll() {
-    const response = await this.get('/categories');
-    return response.data || response; // Handle both direct response and wrapped response
+    return this.get(this.endpoint);
   }
 
   async getById(id) {
-    return this.get(`/categories/${id}`);
+    return this.get(`${this.endpoint}/${id}`);
   }
 
   async create(data) {
-    return this.post('/categories', data);
+    return this.post(this.endpoint, data);
+  }
+
+  async update(id, data) {
+    return this.put(`${this.endpoint}/${id}`, data);
+  }
+
+  async delete(id) {
+    return this.delete(`${this.endpoint}/${id}`);
   }
 }
 

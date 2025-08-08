@@ -10,18 +10,18 @@
           </div>
           
           <nav class="nav">
-            <router-link to="/" class="nav-link active">
+            <a href="#" @click="showSection('catalog')" :class="{ active: currentSection === 'catalog' }" class="nav-link">
               <span class="icon">🏠</span>
-              Inicio
-            </router-link>
-            <router-link to="/categories" class="nav-link">
+              Catálogo
+            </a>
+            <a href="#" @click="showSection('categories')" :class="{ active: currentSection === 'categories' }" class="nav-link">
               <span class="icon">📁</span>
               Categorías
-            </router-link>
-            <router-link to="/products" class="nav-link">
+            </a>
+            <a href="#" @click="showSection('products')" :class="{ active: currentSection === 'products' }" class="nav-link">
               <span class="icon">📦</span>
               Productos
-            </router-link>
+            </a>
           </nav>
 
           <div class="header-actions">
@@ -43,6 +43,14 @@
     <!-- Main content area -->
     <main class="main">
       <div class="container">
+        <main class="main-content">
+          <CatalogViewer v-if="currentSection === 'catalog'" />
+          <CategoriesManager v-if="currentSection === 'categories'" />
+          <div v-if="currentSection === 'products'" class="section-placeholder">
+            <h2>Gestión de Productos</h2>
+            <p>Próximamente disponible...</p>
+          </div>
+        </main>
         <div class="page-header" v-if="pageTitle">
           <h2 class="page-title">{{ pageTitle }}</h2>
           <p class="page-description" v-if="pageDescription">
@@ -87,6 +95,8 @@
 
 <script setup>
 import { ref } from 'vue'
+import CatalogViewer from './CatalogViewer.vue'
+import CategoriesManager from './CategoriesManager.vue'
 
 // Props para personalizar el layout
 const props = defineProps({
@@ -102,11 +112,16 @@ const props = defineProps({
 
 // Estado local
 const searchQuery = ref('')
+const currentSection = ref('catalog')
 
 // Métodos
 const handleSearch = () => {
   // Emitir evento de búsqueda al componente padre
   emit('search', searchQuery.value)
+}
+
+const showSection = (section) => {
+  currentSection.value = section
 }
 
 // Emitir eventos

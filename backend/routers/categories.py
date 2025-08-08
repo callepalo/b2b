@@ -58,7 +58,7 @@ MOCK_CATEGORIES = [
     }
 ]
 
-@router.get("/categories", response_model=CategoryResponse)
+@router.get("/categories")
 async def get_categories():
     """Obtener todas las categorías"""
     return {
@@ -66,7 +66,7 @@ async def get_categories():
         "total": len(MOCK_CATEGORIES)
     }
 
-@router.get("/categories/{category_id}", response_model=Category)
+@router.get("/categories/{category_id}")
 async def get_category(category_id: str):
     """Obtener una categoría específica"""
     category = next((c for c in MOCK_CATEGORIES if c["id"] == category_id), None)
@@ -74,7 +74,7 @@ async def get_category(category_id: str):
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
     return category
 
-@router.post("/categories", response_model=Category)
+@router.post("/categories")
 async def create_category(category: CategoryCreate):
     """Crear una nueva categoría"""
     new_category = {
@@ -88,3 +88,28 @@ async def create_category(category: CategoryCreate):
     }
     MOCK_CATEGORIES.append(new_category)
     return new_category
+
+@router.put("/categories/{category_id}")
+async def update_category(category_id: str, category: CategoryCreate):
+    """Actualizar una categoría existente"""
+    category_index = next((i for i, c in enumerate(MOCK_CATEGORIES) if c["id"] == category_id), None)
+    if category_index is None:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    
+    updated_category = {
+        **MOCK_CATEGORIES[category_index],
+        **category.dict(),
+        "updated_at": "2024-01-01T00:00:00Z"
+    }
+    MOCK_CATEGORIES[category_index] = updated_category
+    return updated_category
+
+@router.delete("/categories/{category_id}")
+async def delete_category(category_id: str):
+    """Eliminar una categoría"""
+    category_index = next((i for i, c in enumerate(MOCK_CATEGORIES) if c["id"] == category_id), None)
+    if category_index is None:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    
+    deleted_category = MOCK_CATEGORIES.pop(category_index)
+    return {"message": "Categoría eliminada exitosamente", "data": deleted_category}
