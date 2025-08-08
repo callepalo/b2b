@@ -16,7 +16,7 @@ class ProductoCreate(ProductoBase):
     pass
 
 class Producto(ProductoBase):
-    id: int
+    id: str  # Cambiado de int a str para soportar UUID
 
     class Config:
         from_attributes = True
@@ -30,7 +30,7 @@ async def obtener_productos():
     return response.data if response.data else []
 
 @router.get("/{producto_id}", response_model=Producto)
-async def obtener_producto(producto_id: int):
+async def obtener_producto(producto_id: str):  # Cambiado de int a str
     """Obtener un producto por ID"""
     supabase = get_supabase()
     response = supabase.table('productos').select('*').eq('id', producto_id).execute()
@@ -67,7 +67,7 @@ async def crear_producto(producto: ProductoCreate):
     return response.data[0]
 
 @router.put("/{producto_id}", response_model=Producto)
-async def actualizar_producto(producto_id: int, producto: ProductoCreate):
+async def actualizar_producto(producto_id: str, producto: ProductoCreate):  # Cambiado de int a str
     """Actualizar un producto existente"""
     supabase = get_supabase()
     
@@ -103,7 +103,7 @@ async def actualizar_producto(producto_id: int, producto: ProductoCreate):
     return response.data[0]
 
 @router.delete("/{producto_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def eliminar_producto(producto_id: int):
+async def eliminar_producto(producto_id: str):  # Cambiado de int a str
     """Eliminar un producto"""
     supabase = get_supabase()
     
