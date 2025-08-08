@@ -1,16 +1,17 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, HTTPException, status, Depends, Query
+from typing import List, Optional, Union
+from pydantic import BaseModel, Field, field_validator
 from config.supabase import get_supabase
 
 router = APIRouter(prefix="/productos", tags=["productos"])
 
 # Modelos Pydantic para Productos
 class ProductoBase(BaseModel):
-    nombre: str
-    descripcion: Optional[str] = None
+    nombre: str = Field(..., min_length=2, max_length=100)
+    descripcion: Optional[str] = Field(None, max_length=500)
     precio: float = Field(..., gt=0, description="El precio debe ser mayor que cero")
     stock: int = Field(..., ge=0, description="El stock no puede ser negativo")
+    categoria_id: str = Field(..., description="ID de la categoría a la que pertenece el producto")
 
 class ProductoCreate(ProductoBase):
     pass
@@ -23,10 +24,17 @@ class Producto(ProductoBase):
 
 # Endpoints
 @router.get("/", response_model=List[Producto])
-async def obtener_productos():
-    """Obtener todos los productos"""
+async def obtener_productos(
+    categoria_id: Optional[str] = Query(None, description="Filtrar por ID de categoría")
+):
+    """Obtener todos los productos, opcionalmente filtrados por categoría"""
     supabase = get_supabase()
-    response = supabase.table('productos').select('*').execute()
+    query = supabase.table('productos').select('*')
+    
+    if categoria_id:
+        query = query.eq('categoria_id', categoria_id)
+    
+    response = query.execute()
     return response.data if response.data else []
 
 @router.get("/{producto_id}", response_model=Producto)
@@ -56,6 +64,15 @@ async def crear_producto(producto: ProductoCreate):
             detail="Ya existe un producto con este nombre"
         )
     
+    # Verificar que la categoría exista
+    categoria = supabase.table('categorias').select('id').eq('id', producto.categoria_id).execute()
+    if not categoria.data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No existe una categoría con ID {producto.categoria_id}"
+        )
+    
+    # Crear el producto
     response = supabase.table('productos').insert(producto.dict()).execute()
     
     if not response.data:
@@ -64,7 +81,9 @@ async def crear_producto(producto: ProductoCreate):
             detail="Error al crear el producto"
         )
     
-    return response.data[0]
+    # Obtener el producto recién creado con sus relaciones
+    nuevo_producto = supabase.table('productos').select('*, categorias(*)').eq('id', response.data[0]['id']).execute()
+    return nuevo_producto.data[0] if nuevo_producto.data else response.data[0]
 
 @router.put("/{producto_id}", response_model=Producto)
 async def actualizar_producto(producto_id: str, producto: ProductoCreate):  # Cambiado de int a str

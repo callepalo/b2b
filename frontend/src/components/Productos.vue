@@ -4,14 +4,33 @@ import axios from 'axios';
 
 const API_URL = 'https://b2b-wa72.onrender.com';
 const productos = ref([]);
+const categorias = ref([]);
 const productoActual = ref({
   id: null,
   nombre: '',
   descripcion: '',
   precio: 0,
-  stock: 0
+  stock: 0,
+  categoria_id: ''
 });
 const modoEdicion = ref(false);
+
+// Obtener todas las categorías
+const obtenerCategorias = async () => {
+  try {
+    const { data } = await axios.get(`${API_URL}/categorias`);
+    categorias.value = data;
+  } catch (error) {
+    console.error('Error al obtener categorías:', error);
+    alert('Error al cargar las categorías');
+  }
+};
+
+// Obtener nombre de categoría por ID
+const obtenerNombreCategoria = (id) => {
+  const categoria = categorias.value.find(cat => cat.id === id);
+  return categoria ? categoria.nombre : 'Sin categoría';
+};
 
 // Obtener todos los productos
 const obtenerProductos = async () => {
@@ -94,9 +113,12 @@ const limpiarFormulario = () => {
   modoEdicion.value = false;
 };
 
-// Cargar productos al montar el componente
-onMounted(() => {
-  obtenerProductos();
+// Cargar datos al montar el componente
+onMounted(async () => {
+  await Promise.all([
+    obtenerProductos(),
+    obtenerCategorias()
+  ]);
 });
 </script>
 
@@ -107,32 +129,35 @@ onMounted(() => {
     <!-- Formulario de Producto -->
     <div class="form-container">
       <h3>{{ modoEdicion ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
-      <form @submit.prevent="guardarProducto" class="product-form">
+      <form @submit.prevent="guardarProducto" class="form-container">
         <div class="form-group">
-          <label>Nombre</label>
-          <input v-model="productoActual.nombre" type="text" required>
+          <label for="nombre">Nombre:</label>
+          <input type="text" id="nombre" v-model="productoActual.nombre" required>
         </div>
         <div class="form-group">
-          <label>Descripción</label>
-          <textarea v-model="productoActual.descripcion"></textarea>
+          <label for="descripcion">Descripción:</label>
+          <textarea id="descripcion" v-model="productoActual.descripcion"></textarea>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Precio</label>
-            <input v-model.number="productoActual.precio" type="number" step="0.01" required>
-          </div>
-          <div class="form-group">
-            <label>Stock</label>
-            <input v-model.number="productoActual.stock" type="number" required>
-          </div>
+        <div class="form-group">
+          <label for="precio">Precio:</label>
+          <input type="number" id="precio" v-model.number="productoActual.precio" min="0" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="stock">Stock:</label>
+          <input type="number" id="stock" v-model.number="productoActual.stock" min="0" required>
+        </div>
+        <div class="form-group">
+          <label for="categoria">Categoría:</label>
+          <select id="categoria" v-model="productoActual.categoria_id" required>
+            <option value="" disabled>Seleccione una categoría</option>
+            <option v-for="categoria in categorias" :key="categoria.id" :value="categoria.id">
+              {{ categoria.nombre }}
+            </option>
+          </select>
         </div>
         <div class="form-actions">
-          <button type="submit" class="btn-save">
-            {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
-          </button>
-          <button v-if="modoEdicion" type="button" class="btn-cancel" @click="limpiarFormulario">
-            Cancelar
-          </button>
+          <button type="submit" class="btn-save">{{ modoEdicion ? 'Actualizar' : 'Guardar' }}</button>
+          <button type="button" @click="limpiarFormulario" class="btn-cancel">Cancelar</button>
         </div>
       </form>
     </div>
@@ -147,21 +172,21 @@ onMounted(() => {
         <table class="products-table">
           <thead>
             <tr>
-              <th>ID</th>
               <th>Nombre</th>
               <th>Descripción</th>
               <th>Precio</th>
               <th>Stock</th>
+              <th>Categoría</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="producto in productos" :key="producto.id">
-              <td>{{ producto.id }}</td>
               <td>{{ producto.nombre }}</td>
-              <td>{{ producto.descripcion }}</td>
+              <td>{{ producto.descripcion || 'N/A' }}</td>
               <td>${{ producto.precio.toFixed(2) }}</td>
               <td>{{ producto.stock }}</td>
+              <td>{{ obtenerNombreCategoria(producto.categoria_id) }}</td>
               <td class="actions">
                 <button @click="obtenerProducto(producto.id)" class="btn-edit">
                   Editar
