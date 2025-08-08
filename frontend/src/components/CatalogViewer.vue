@@ -1,142 +1,143 @@
 <template>
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="container">
-      <h1 class="hero-title">Catálogo B2B</h1>
-      <p class="hero-subtitle">
-        Descubre nuestros productos premium para tu negocio
-      </p>
-      
-      <!-- Search Bar -->
-      <div class="search-section">
-        <div class="search-container">
-          <input 
-            type="text" 
-            placeholder="Buscar productos..."
-            class="search-input"
-            v-model="searchQuery"
-            @input="handleSearch"
-          >
-          <button class="search-btn">
-            <span>🔍</span>
-          </button>
+  <div class="catalog-viewer">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <h1 class="hero-title">Catálogo B2B</h1>
+        <p class="hero-subtitle">
+          Descubre nuestros productos premium para tu negocio
+        </p>
+        
+        <!-- Search Bar -->
+        <div class="search-section">
+          <div class="search-container">
+            <input 
+              type="text" 
+              placeholder="Buscar productos..."
+              class="search-input"
+              v-model="searchQuery"
+              @input="handleSearch"
+            >
+            <button class="search-btn">
+              <span>🔍</span>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <!-- Status Bar -->
-      <div class="status-bar" v-if="!loading">
-        <div class="status-indicator" :class="statusClass">
-          <span class="indicator-dot"></span>
-          <span class="status-text">{{ statusText }}</span>
-        </div>
-        <div class="stats">
-          <span>{{ totalProducts }} productos</span>
-          <span>•</span>
-          <span>{{ totalCategories }} categorías</span>
+        <!-- Status Bar -->
+        <div class="status-bar" v-if="!loading">
+          <div class="status-indicator" :class="statusClass">
+            <span class="indicator-dot"></span>
+            <span class="status-text">{{ statusText }}</span>
+          </div>
+          <div class="stats">
+            <span>{{ totalProducts }} productos</span>
+            <span>•</span>
+            <span>{{ totalCategories }} categorías</span>
+          </div>
         </div>
       </div>
+    </section>
+
+    <!-- Content -->
+    <div v-if="loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Cargando catálogo...</p>
     </div>
-  </section>
 
-  <!-- Content -->
-  <div v-if="loading" class="loading-state">
-    <div class="loading-spinner"></div>
-    <p>Cargando catálogo...</p>
-  </div>
+    <div v-else-if="error" class="error-state">
+      <div class="error-icon">⚠️</div>
+      <h3>Error al cargar</h3>
+      <p>{{ error }}</p>
+      <button class="retry-btn" @click="loadCatalog">
+        Reintentar
+      </button>
+    </div>
 
-  <div v-else-if="error" class="error-state">
-    <div class="error-icon">⚠️</div>
-    <h3>Error al cargar</h3>
-    <p>{{ error }}</p>
-    <button class="retry-btn" @click="loadCatalog">
-      Reintentar
-    </button>
-  </div>
-
-  <div v-else class="catalog-content">
-    <!-- Categories Section -->
-    <section class="categories-section">
-      <div class="section-header">
-        <h2>Categorías</h2>
-        <p>Explora por categoría</p>
-      </div>
-      
-      <div class="categories-grid">
-        <div 
-          v-for="category in categories" 
-          :key="category.id" 
-          class="category-card"
-          :class="{ active: selectedCategory === category.id }"
-          @click="selectCategory(category.id)"
-        >
-          <div class="category-icon">
-            <span>📁</span>
-          </div>
-          <div class="category-content">
-            <h3 class="category-name">{{ category.name }}</h3>
-            <p class="category-description">{{ category.description }}</p>
-            <span class="category-count">{{ getProductCount(category.id) }} productos</span>
-          </div>
+    <div v-else class="catalog-content">
+      <!-- Categories Section -->
+      <section class="categories-section">
+        <div class="section-header">
+          <h2>Categorías</h2>
+          <p>Explora por categoría</p>
         </div>
-      </div>
-    </section>
-
-    <!-- Products Section -->
-    <section class="products-section">
-      <div class="section-header">
-        <h2>Productos</h2>
-        <p>Descubre nuestros mejores productos</p>
-      </div>
-      
-      <div class="products-grid">
-        <div 
-          v-for="product in filteredProducts" 
-          :key="product.id" 
-          class="product-card"
-        >
-          <div class="product-image">
-            <div class="image-placeholder">
-              <span class="product-icon">📦</span>
+        
+        <div class="categories-grid">
+          <div 
+            v-for="category in categories" 
+            :key="category.id" 
+            class="category-card"
+            :class="{ active: selectedCategory === category.id }"
+            @click="selectCategory(category.id)"
+          >
+            <div class="category-icon">
+              <span>📁</span>
             </div>
-            <div class="product-badge" v-if="product.is_featured">
-              Destacado
-            </div>
-          </div>
-          
-          <div class="product-content">
-            <div class="product-header">
-              <h3 class="product-name">{{ product.name }}</h3>
-              <span class="product-sku">{{ product.sku }}</span>
-            </div>
-            
-            <p class="product-description">{{ product.description }}</p>
-            
-            <div class="product-meta">
-              <span class="product-price">${{ product.price }}</span>
-              <span class="product-category">{{ getCategoryName(product.category_id) }}</span>
-            </div>
-            
-            <div v-if="product.attributes" class="product-attributes">
-              <span 
-                v-for="(value, key) in product.attributes" 
-                :key="key"
-                class="attribute-tag"
-              >
-                {{ key }}: {{ value }}
-              </span>
-            </div>
-            
-            <div class="product-actions">
-              <button class="btn-primary" @click="viewProduct(product)">
-                Ver detalles
-              </button>
+            <div class="category-content">
+              <h3 class="category-name">{{ category.name }}</h3>
+              <p class="category-description">{{ category.description }}</p>
+              <span class="category-count">{{ getProductCount(category.id) }} productos</span>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- Products Section -->
+      <section class="products-section">
+        <div class="section-header">
+          <h2>Productos</h2>
+          <p>Descubre nuestros mejores productos</p>
+        </div>
+        
+        <div class="products-grid">
+          <div 
+            v-for="product in filteredProducts" 
+            :key="product.id" 
+            class="product-card"
+          >
+            <div class="product-image">
+              <div class="image-placeholder">
+                <span class="product-icon">📦</span>
+              </div>
+              <div class="product-badge" v-if="product.is_featured">
+                Destacado
+              </div>
+            </div>
+            
+            <div class="product-content">
+              <div class="product-header">
+                <h3 class="product-name">{{ product.name }}</h3>
+                <span class="product-sku">{{ product.sku }}</span>
+              </div>
+              
+              <p class="product-description">{{ product.description }}</p>
+              
+              <div class="product-meta">
+                <span class="product-price">${{ product.price }}</span>
+                <span class="product-category">{{ getCategoryName(product.category_id) }}</span>
+              </div>
+              
+              <div v-if="product.attributes" class="product-attributes">
+                <span 
+                  v-for="(value, key) in product.attributes" 
+                  :key="key"
+                  class="attribute-tag"
+                >
+                  {{ key }}: {{ value }}
+                </span>
+              </div>
+              
+              <div class="product-actions">
+                <button class="btn-primary" @click="viewProduct(product)">
+                  Ver detalles
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   </div>
-</div>
 </template>
 
 <script setup>
@@ -154,10 +155,11 @@ const searchQuery = ref('')
 // Computed
 const totalCategories = computed(() => categories.value.length)
 const totalProducts = computed(() => products.value.length)
-
 const filteredProducts = computed(() => {
-  if (!selectedCategory.value) return products.value
-  return products.value.filter(product => product.category_id === selectedCategory.value)
+  if (selectedCategory.value) {
+    return products.value.filter(product => product.category_id === selectedCategory.value)
+  }
+  return products.value
 })
 
 const statusClass = computed(() => {
@@ -208,11 +210,9 @@ const getCategoryName = (categoryId) => {
 
 const viewProduct = (product) => {
   console.log('Ver producto:', product.name)
-  // Aquí podríamos implementar un modal o navegación a detalles
 }
 
 const handleSearch = () => {
-  // Implementar búsqueda en tiempo real
   console.log('Buscando:', searchQuery.value)
 }
 
