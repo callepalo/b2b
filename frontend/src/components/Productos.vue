@@ -336,6 +336,10 @@ onMounted(async () => {
               </option>
             </select>
           </div>
+          <div class="form-group">
+            <label for="imagen_url">URL de la Imagen (opcional)</label>
+            <input type="url" id="imagen_url" v-model="productoActual.imagen_url" placeholder="https://ejemplo.com/imagen.jpg">
+          </div>
           <div class="form-actions">
             <button type="button" @click="cerrarFormulario" class="btn btn-outline">
               Cancelar
