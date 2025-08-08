@@ -23,7 +23,7 @@ class Producto(ProductoBase):
         from_attributes = True
 
 # Endpoints
-@router.get("/", response_model=List[Producto])
+@router.get("", response_model=List[Producto], response_model_exclude_none=True)
 async def obtener_productos(
     categoria_id: Optional[str] = Query(None, description="Filtrar por ID de categoría")
 ):
