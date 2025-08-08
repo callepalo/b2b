@@ -765,10 +765,10 @@ onMounted(async () => {
   gap: 0.5rem;
 }
 
-.btn-icon {
+.action-btn {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -777,17 +777,32 @@ onMounted(async () => {
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 1rem;
 }
 
-.btn-icon:hover {
+.action-btn:hover {
   background: #f8f9fa;
+  transform: translateY(-2px);
+}
+
+.action-btn.edit {
   color: var(--primary);
   border-color: var(--primary);
 }
 
-.btn-icon.delete:hover {
+.action-btn.edit:hover {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: var(--primary);
+}
+
+.action-btn.delete {
   color: var(--danger);
   border-color: var(--danger);
+}
+
+.action-btn.delete:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: var(--danger);
 }
 
 /* No Products Message */
