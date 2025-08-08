@@ -29,24 +29,49 @@ async def obtener_productos(
 ):
     """Obtener todos los productos, opcionalmente filtrados por categoría"""
     try:
+        print("Obteniendo cliente de Supabase...")
         supabase = get_supabase()
+        print("Cliente de Supabase obtenido")
+        
+        print("Preparando consulta a la tabla 'productos'...")
         query = supabase.table('productos').select('*')
         
         if categoria_id:
+            print(f"Filtrando por categoría_id: {categoria_id}")
             query = query.eq('categoria_id', categoria_id)
         
+        print("Ejecutando consulta...")
         response = query.execute()
+        print(f"Respuesta de Supabase: {response}")
         
         # Asegurarse de que siempre devolvemos una lista
         if not response.data:
+            print("No se encontraron productos")
             return []
             
+        print(f"Productos encontrados: {len(response.data)}")
         return response.data
+        
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         print(f"Error en obtener_productos: {str(e)}")
+        print(f"Detalles del error: {error_details}")
+        
+        # Intentar obtener más detalles del error de Supabase si está disponible
+        error_msg = str(e)
+        if hasattr(e, 'message'):
+            error_msg = e.message
+        elif hasattr(e, 'args') and e.args:
+            error_msg = str(e.args[0])
+            
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener los productos: {str(e)}"
+            detail={
+                "message": "Error al obtener los productos",
+                "error": error_msg,
+                "type": type(e).__name__
+            }
         )
 
 @router.get("/{producto_id}", response_model=Producto)
