@@ -41,13 +41,48 @@ const obtenerCategoria = async (id) => {
 
 // Crear una nueva categoría
 const crearCategoria = async () => {
+  // Validación básica del formulario
+  if (!categoriaActual.value.nombre || categoriaActual.value.nombre.trim() === '') {
+    alert('El nombre de la categoría es obligatorio');
+    return;
+  }
+
   try {
-    await axios.post(`${API_URL}/categorias`, categoriaActual.value);
+    // Limpiar el nombre de espacios en blanco al inicio/fin
+    const categoriaData = {
+      ...categoriaActual.value,
+      nombre: categoriaActual.value.nombre.trim(),
+      descripcion: categoriaActual.value.descripcion ? categoriaActual.value.descripcion.trim() : ''
+    };
+
+    const { data } = await axios.post(`${API_URL}/categorias`, categoriaData);
+    
+    // Mostrar mensaje de éxito
+    alert('Categoría creada exitosamente');
+    
+    // Actualizar la lista de categorías
     await obtenerCategorias();
     cerrarFormulario();
   } catch (error) {
     console.error('Error al crear la categoría:', error);
-    alert('Error al crear la categoría');
+    
+    // Manejo de errores específicos
+    if (error.response) {
+      // Error de validación del servidor
+      if (error.response.status === 400) {
+        alert(error.response.data.detail || 'Error de validación: ' + JSON.stringify(error.response.data));
+      } else if (error.response.status === 500) {
+        alert('Error en el servidor al crear la categoría');
+      } else {
+        alert(`Error ${error.response.status}: ${error.response.data?.detail || 'Error desconocido'}`);
+      }
+    } else if (error.request) {
+      // La petición fue hecha pero no hubo respuesta
+      alert('No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet.');
+    } else {
+      // Error al configurar la petición
+      alert('Error al configurar la petición: ' + error.message);
+    }
   }
 };
 
@@ -84,12 +119,27 @@ const eliminarCategoria = async (id) => {
   }
 };
 
+// Estado de carga
+const isLoading = ref(false);
+
 // Guardar o actualizar categoría
-const guardarCategoria = () => {
-  if (modoEdicion.value) {
-    actualizarCategoria();
-  } else {
-    crearCategoria();
+const guardarCategoria = async () => {
+  // No hacer nada si ya hay una operación en curso
+  if (isLoading.value) return;
+  
+  try {
+    isLoading.value = true;
+    
+    if (modoEdicion.value) {
+      await actualizarCategoria();
+    } else {
+      await crearCategoria();
+    }
+  } catch (error) {
+    console.error('Error al guardar la categoría:', error);
+    // El manejo de errores específicos ya está en las funciones individuales
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -199,8 +249,10 @@ onMounted(() => {
             <button type="button" class="btn btn-outline" @click="cerrarFormulario">
               <i class="fas fa-times"></i> Cancelar
             </button>
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-save"></i> {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
+            <button type="submit" class="btn btn-primary" :disabled="isLoading">
+              <span v-if="isLoading" class="btn-loader"></span>
+              <i v-else class="fas fa-save"></i> 
+              {{ isLoading ? 'Procesando...' : (modoEdicion ? 'Actualizar' : 'Guardar') }}
             </button>
           </div>
         </form>
@@ -539,6 +591,29 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--danger);
   border-color: #f5c6cb;
   background-color: #f8d7da;
+}
+
+/* Loading spinner */
+.btn-loader {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s ease-in-out infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Disabled button state */
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 /* Formulario */

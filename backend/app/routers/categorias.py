@@ -40,3 +40,43 @@ async def obtener_categoria(categoria_id: str):
         )
     
     return response.data[0]
+
+@router.post("/", response_model=Categoria, status_code=status.HTTP_201_CREATED)
+async def crear_categoria(categoria: CategoriaCreate):
+    """Crear una nueva categoría"""
+    supabase = get_supabase()
+    
+    # Verificar si ya existe una categoría con el mismo nombre (case insensitive)
+    existing = supabase.table('categorias')\
+        .select('*')\
+        .ilike('nombre', categoria.nombre)\
+        .execute()
+    
+    if existing.data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ya existe una categoría con este nombre"
+        )
+    
+    try:
+        # Insertar la nueva categoría
+        response = supabase.table('categorias')\
+            .insert(categoria.model_dump())\
+            .execute()
+        
+        if not response.data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error al crear la categoría"
+            )
+            
+        # Obtener la categoría recién creada para devolverla
+        new_category = response.data[0]
+        return new_category
+        
+    except Exception as e:
+        print(f"Error al crear categoría: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al crear la categoría: {str(e)}"
+        )
