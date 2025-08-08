@@ -11,6 +11,8 @@ import CatalogViewer from './components/CatalogViewer.vue'
 <style>
 #app {
   font-family: system-ui, -apple-system, sans-serif;
+}
+
 * {
   margin: 0;
   padding: 0;
