@@ -107,7 +107,7 @@ async def obtener_producto(producto_id: str):  # Cambiado de int a str
     
     return producto
 
-@router.post("/", response_model=Producto, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Producto, status_code=status.HTTP_201_CREATED)
 async def crear_producto(producto: ProductoCreate):
     """Crear un nuevo producto"""
     supabase = get_supabase()
