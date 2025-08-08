@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 
-const API_URL = 'https://b2b-wa72.onrender.com';
+const API_URL = 'https://b2b-wa72.onrender.com/api/v1';
 const productos = ref([]);
 const productosFiltrados = ref([]);
 const categorias = ref([]);
