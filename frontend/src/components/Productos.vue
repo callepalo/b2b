@@ -58,13 +58,28 @@ const obtenerProductos = async () => {
 // Obtener un producto por ID
 const obtenerProducto = async (id) => {
   try {
+    console.log(`Obteniendo producto con ID: ${id}`);
     const { data } = await axios.get(`${API_URL}/productos/${id}`);
-    productoActual.value = data;
+    
+    if (!data) {
+      throw new Error('No se recibieron datos del producto');
+    }
+    
+    console.log('Datos del producto recibidos:', data);
+    
+    // Asegurarse de que los campos numéricos sean números
+    productoActual.value = {
+      ...data,
+      precio: parseFloat(data.precio) || 0,
+      stock: parseInt(data.stock) || 0
+    };
+    
     modoEdicion.value = true;
     mostrarFormulario.value = true;
+    
   } catch (error) {
     console.error('Error al obtener el producto:', error);
-    alert('Error al cargar el producto');
+    alert(`Error al cargar el producto: ${error.response?.data?.detail || error.message}`);
   }
 };
 
@@ -83,12 +98,43 @@ const crearProducto = async () => {
 // Actualizar un producto existente
 const actualizarProducto = async () => {
   try {
-    await axios.put(`${API_URL}/productos/${productoActual.value.id}`, productoActual.value);
-    await obtenerProductos();
-    cerrarFormulario();
+    console.log('Actualizando producto con ID:', productoActual.value.id);
+    console.log('Datos a enviar:', productoActual.value);
+    
+    const response = await axios.put(
+      `${API_URL}/productos/${productoActual.value.id}`, 
+      productoActual.value
+    );
+    
+    console.log('Respuesta del servidor:', response.data);
+    
+    if (response.data) {
+      alert('Producto actualizado correctamente');
+      await obtenerProductos();
+      cerrarFormulario();
+    } else {
+      throw new Error('No se recibieron datos de respuesta del servidor');
+    }
   } catch (error) {
     console.error('Error al actualizar el producto:', error);
-    alert('Error al actualizar el producto');
+    
+    let errorMessage = 'Error al actualizar el producto';
+    
+    if (error.response) {
+      if (error.response.status === 400) {
+        errorMessage = error.response.data?.detail || 'Datos de entrada inválidos';
+      } else if (error.response.status === 404) {
+        errorMessage = 'El producto no fue encontrado';
+      } else if (error.response.status === 500) {
+        errorMessage = 'Error en el servidor al actualizar el producto';
+      } else if (error.response.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+    } else if (error.request) {
+      errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+    }
+    
+    alert(errorMessage);
   }
 };
 
@@ -101,11 +147,35 @@ const confirmarEliminar = (id) => {
 
 const eliminarProducto = async (id) => {
   try {
-    await axios.delete(`${API_URL}/productos/${id}`);
-    await obtenerProductos();
+    console.log(`Eliminando producto con ID: ${id}`);
+    const response = await axios.delete(`${API_URL}/productos/${id}`);
+    
+    if (response.status === 200 || response.status === 204) {
+      console.log('Producto eliminado exitosamente');
+      alert('Producto eliminado correctamente');
+      await obtenerProductos();
+    } else {
+      throw new Error(`Respuesta inesperada del servidor: ${response.status}`);
+    }
   } catch (error) {
     console.error('Error al eliminar el producto:', error);
-    alert('Error al eliminar el producto');
+    let errorMessage = 'Error al eliminar el producto';
+    
+    if (error.response) {
+      // El servidor respondió con un código de estado fuera del rango 2xx
+      if (error.response.status === 404) {
+        errorMessage = 'El producto no fue encontrado o ya fue eliminado';
+      } else if (error.response.status === 500) {
+        errorMessage = 'Error en el servidor al intentar eliminar el producto';
+      } else if (error.response.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+    } else if (error.request) {
+      // La petición fue hecha pero no se recibió respuesta
+      errorMessage = 'No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet.';
+    }
+    
+    alert(errorMessage);
   }
 };
 
