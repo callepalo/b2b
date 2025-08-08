@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 from config.supabase import get_supabase
 
-router = APIRouter(prefix="/categorias", tags=["categorias"])
+router = APIRouter(tags=["categorias"])
 
 # Modelo Pydantic para Categorías
 class CategoriaBase(BaseModel):
@@ -20,14 +20,14 @@ class Categoria(CategoriaBase):
         from_attributes = True
 
 # Endpoints para Categorías
-@router.get("/", response_model=List[Categoria])
+@router.get("", response_model=List[Categoria])
 async def obtener_categorias():
     """Obtener todas las categorías"""
     supabase = get_supabase()
     response = supabase.table('categorias').select('*').order('nombre').execute()
     return response.data if response.data else []
 
-@router.get("/{categoria_id}", response_model=Categoria)
+@router.get("{categoria_id}", response_model=Categoria)
 async def obtener_categoria(categoria_id: str):
     """Obtener una categoría por ID"""
     supabase = get_supabase()
@@ -41,7 +41,7 @@ async def obtener_categoria(categoria_id: str):
     
     return response.data[0]
 
-@router.post("/", response_model=Categoria, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Categoria, status_code=status.HTTP_201_CREATED)
 async def crear_categoria(categoria: CategoriaCreate):
     """Crear una nueva categoría"""
     supabase = get_supabase()
