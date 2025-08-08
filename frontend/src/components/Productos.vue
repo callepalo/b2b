@@ -5,6 +5,7 @@ const errorMensaje = ref('');
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://b2b-wa72.onrender.com/api/v1';
+console.log('API_URL used:', API_URL);
 const productos = ref([]);
 const productosFiltrados = ref([]);
 const categorias = ref([]);
@@ -35,7 +36,9 @@ const obtenerCategorias = async () => {
     categorias.value = data;
   } catch (error) {
     console.error('Error al obtener categorías:', error);
-    alert('Error al cargar las categorías');
+    const errorMessage = error.response?.data?.detail || error.message || 'Error al cargar las categorías';
+    errorMensaje.value = errorMessage;
+    alert(errorMessage);
   }
 };
 
@@ -49,11 +52,19 @@ const obtenerNombreCategoria = (id) => {
 const obtenerProductos = async () => {
   try {
     const { data } = await axios.get(`${API_URL}/productos`);
-    productos.value = data;
-    productosFiltrados.value = [...data];
+    console.log('Productos obtenidos del API:', data);
+    productos.value = data.map(p => ({ ...p, precio: p.precio !== undefined && p.precio !== null ? Number(p.precio) : 0 }));
+    productosFiltrados.value = [...productos.value];
+    if (!data || data.length === 0) {
+      const msg = 'No se encontraron productos en la respuesta del servidor.';
+      errorMensaje.value = msg;
+      alert(msg);
+    }
   } catch (error) {
     console.error('Error al obtener productos:', error);
-    alert('Error al cargar los productos');
+    const errorMessage = error.response?.data?.detail || error.message || 'Error al cargar los productos';
+    errorMensaje.value = errorMessage;
+    alert(errorMessage);
   }
 };
 
@@ -81,7 +92,22 @@ const obtenerProducto = async (id) => {
     
   } catch (error) {
     console.error('Error al obtener el producto:', error);
-    alert(`Error al cargar el producto: ${error.response?.data?.detail || error.message}`);
+    let errorMessage = 'Error al cargar el producto';
+    
+    if (error.response) {
+      if (error.response.status === 400) {
+        errorMessage = error.response.data?.detail || 'Datos de entrada inválidos';
+      } else if (error.response.status === 404) {
+        errorMessage = 'El producto no fue encontrado';
+      } else if (error.response.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+    } else if (error.request) {
+      errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+    }
+    
+    errorMensaje.value = errorMessage;
+    alert(errorMessage);
   }
 };
 
@@ -110,6 +136,7 @@ const crearProducto = async () => {
     // Si no se lanza excepción, consideramos la creación exitosa
     await obtenerProductos();
     cerrarFormulario();
+    errorMensaje.value = '';
     alert('Producto creado exitosamente');
   } catch (error) {
     console.error('Error al crear el producto:', error);
@@ -130,6 +157,7 @@ const crearProducto = async () => {
       errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
     }
     
+    errorMensaje.value = errorMessage;
     alert(errorMessage);
   }
 };
@@ -169,6 +197,7 @@ const actualizarProducto = async () => {
       errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
     }
     
+    errorMensaje.value = errorMessage;
     alert(errorMessage);
   }
 };
@@ -189,6 +218,7 @@ const eliminarProducto = async (id) => {
       console.log('Producto eliminado exitosamente');
       alert('Producto eliminado correctamente');
       await obtenerProductos();
+      errorMensaje.value = '';
     } else {
       throw new Error(`Respuesta inesperada del servidor: ${response.status}`);
     }
@@ -210,6 +240,7 @@ const eliminarProducto = async (id) => {
       errorMessage = 'No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet.';
     }
     
+    errorMensaje.value = errorMessage;
     alert(errorMessage);
   }
 };
@@ -295,6 +326,7 @@ onMounted(async () => {
 
 <template>
   <div class="productos-container">
+    <div v-if="errorMensaje" class="error-message" style="color: red; margin-bottom: 1rem;">{{ errorMensaje }}</div>
     <!-- Botón flotante para agregar producto -->
     <button class="add-product-btn" @click="abrirFormulario">
       <i class="fas fa-plus"></i>
@@ -398,7 +430,7 @@ onMounted(async () => {
               {{ producto.descripcion }}
             </p>
             <div class="product-footer">
-              <span class="product-price">${{ producto.precio.toFixed(2) }}</span>
+              <span class="product-price">${{ producto.precio != null ? Number(producto.precio).toFixed(2) : '-' }}</span>
               <div class="product-actions">
                 <button class="action-btn edit" @click="editarProducto(producto.id)" title="Editar">
                   <i class="fas fa-edit"></i>
