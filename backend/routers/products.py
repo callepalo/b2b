@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import uuid
 import os
 from supabase_client import get_supabase
+from supabase.lib.storage.types import FileOptions
 
 router = APIRouter()
 
@@ -145,7 +146,8 @@ async def upload_product_image(product_id: str, file: UploadFile = File(...)):
 
     try:
         bucket = sb.storage.from_('product-images')
-        bucket.upload(key, content, {"contentType": file.content_type or "application/octet-stream", "upsert": True})
+        opts = FileOptions(content_type=(file.content_type or "application/octet-stream"), upsert=True)
+        bucket.upload(key, content, file_options=opts)
         public_raw = bucket.get_public_url(key)
         # Normalizar a string por si la librería retorna un objeto
         public = None
