@@ -1,3 +1,20 @@
+def _base_slug(name: str) -> str:
+    return (name or '').strip().lower().replace(' ', '-').replace('/', '-')
+
+def _unique_slug(sb, base: str, exclude_id: str | None = None) -> str:
+    """Ensure slug uniqueness by appending a short uuid if needed."""
+    if not base:
+        base = str(uuid.uuid4())[:8]
+    # Check exact match first (excluding current id on updates)
+    q = sb.table('products').select('id').eq('slug', base)
+    if exclude_id:
+        q = q.neq('id', exclude_id)
+    resp = q.limit(1).execute()
+    exists = bool(resp.data)
+    if not exists:
+        return base
+    # Append short suffix
+    return f"{base}-{uuid.uuid4().hex[:6]}"
 from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from typing import List, Optional
 from pydantic import BaseModel
@@ -81,8 +98,11 @@ async def create_product(product: ProductCreate):
     """Crear un nuevo producto"""
     sb = get_supabase()
     payload = product.model_dump()
+    # Generate unique slug
+    base = _base_slug(product.name)
+    slug = _unique_slug(sb, base)
     payload.update({
-        "slug": product.name.lower().replace(" ", "-"),
+        "slug": slug,
         "short_description": (product.description[:100] if product.description else None),
         "compare_price": None,
         "sku": None,
@@ -102,9 +122,11 @@ async def update_product(product_id: str, product: ProductCreate):
     """Actualizar un producto existente"""
     sb = get_supabase()
     payload = product.model_dump()
-    # Mantener slug en sync con el nombre si cambia
+    # Mantener slug en sync con el nombre si cambia, asegurando unicidad (excluyendo el propio producto)
+    base = _base_slug(product.name)
+    slug = _unique_slug(sb, base, exclude_id=product_id)
     payload.update({
-        "slug": product.name.lower().replace(" ", "-"),
+        "slug": slug,
         "short_description": (product.description[:100] if product.description else None),
     })
     resp = sb.table('products').update(payload).eq('id', product_id).execute()
