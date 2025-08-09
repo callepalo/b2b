@@ -41,7 +41,7 @@ const tabs = [
 
 <style scoped>
 .app { min-height: 100vh; display: flex; flex-direction: column; }
-.container { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+.container { max-width: 1680px; margin: 0 auto; padding: 0 16px; }
 .header { border-bottom: 1px solid #eee; background: #fff; }
 .brand { font-size: 18px; margin: 0; padding: 12px 0; }
 .tabs { display: flex; gap: 8px; padding-bottom: 12px; }
