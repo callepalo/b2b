@@ -256,7 +256,7 @@ button.danger { border-color: #d33; color: #d33; }
 .ctrl-input { flex: 1 1 280px; min-width: 200px; }
 .ctrl-select { flex: 0 1 200px; }
 .grid { display: grid; gap: 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-@media (max-width: 1600px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1800px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .grid { grid-template-columns: repeat(1, minmax(0, 1fr)); } }
 
