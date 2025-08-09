@@ -16,6 +16,8 @@ app.add_middleware(
         "http://localhost:5173",  # Para desarrollo local
         "http://localhost:3000",  # Puerto alternativo
     ],
+    # Permite también cualquier subdominio de Netlify (deploy previews)
+    allow_origin_regex=r"^https://([a-z0-9-]+)\.netlify\.app$",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
