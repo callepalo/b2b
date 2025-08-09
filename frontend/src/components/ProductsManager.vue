@@ -101,6 +101,11 @@ function startEdit(p) {
   imageFile.value = null
 }
 
+function onFileChange(e) {
+  const files = e?.target?.files
+  imageFile.value = files && files.length ? files[0] : null
+}
+
 async function removeProduct(id) {
   if (!confirm('¿Eliminar este producto?')) return
   try {
@@ -151,7 +156,7 @@ onMounted(async () => {
       </div>
       <div class="row">
         <label>Imagen</label>
-        <input type="file" accept="image/*" @change="e => imageFile.value = e.target.files?.[0] || null" />
+        <input type="file" accept="image/*" @change="onFileChange" />
       </div>
       <div class="actions">
         <button type="submit">{{ isEditing ? 'Guardar cambios' : 'Crear' }}</button>
