@@ -9,7 +9,7 @@ const testApi = async () => {
   status.value = 'loading'
   try {
     if (!apiUrl) throw new Error('VITE_API_URL no está definida')
-    const res = await fetch(`${apiUrl}/ping`, {
+    const res = await fetch(`${apiUrl}/api/v1/ping`, {
       headers: { 'Content-Type': 'application/json' }
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
