@@ -95,3 +95,29 @@ async def create_product(product: ProductCreate):
     if not data:
         raise HTTPException(status_code=500, detail="No se pudo crear el producto")
     return data[0]
+
+@router.put("/products/{product_id}", response_model=Product)
+async def update_product(product_id: str, product: ProductCreate):
+    """Actualizar un producto existente"""
+    sb = get_supabase()
+    payload = product.model_dump()
+    # Mantener slug en sync con el nombre si cambia
+    payload.update({
+        "slug": product.name.lower().replace(" ", "-"),
+        "short_description": (product.description[:100] if product.description else None),
+    })
+    resp = sb.table('products').update(payload).eq('id', product_id).execute()
+    data = resp.data or []
+    if not data:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    return data[0]
+
+@router.delete("/products/{product_id}")
+async def delete_product(product_id: str):
+    """Eliminar un producto"""
+    sb = get_supabase()
+    resp = sb.table('products').delete().eq('id', product_id).execute()
+    data = resp.data or []
+    if not data:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    return {"message": "Producto eliminado exitosamente", "data": data[0]}
