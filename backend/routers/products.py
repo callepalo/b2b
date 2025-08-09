@@ -146,12 +146,21 @@ async def upload_product_image(product_id: str, file: UploadFile = File(...)):
     try:
         bucket = sb.storage.from_('product-images')
         bucket.upload(key, content, {"contentType": file.content_type or "application/octet-stream", "upsert": True})
-        public = bucket.get_public_url(key)
+        public_raw = bucket.get_public_url(key)
+        # Normalizar a string por si la librería retorna un objeto
+        public = None
+        if isinstance(public_raw, str):
+            public = public_raw
+        elif isinstance(public_raw, dict):
+            public = public_raw.get('publicUrl') or (public_raw.get('data') or {}).get('publicUrl') or public_raw.get('signedUrl')
+        if not public:
+            raise RuntimeError(f"No se obtuvo URL pública válida: {public_raw}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error subiendo imagen: {e}")
 
     # Actualizar el array de imágenes del producto
     images = prod_data[0].get('images') or []
+    # Asegurar que guardamos strings (si hay objetos previos, los mantenemos y añadimos string)
     images.append(public)
     sb.table('products').update({"images": images}).eq('id', product_id).execute()
 

@@ -19,6 +19,15 @@ const imageFile = ref(null)
 
 const isEditing = computed(() => !!editingId.value)
 
+function imageUrl(val) {
+  if (!val) return ''
+  if (typeof val === 'string') return val
+  if (typeof val === 'object') {
+    return val.publicUrl || (val.data && val.data.publicUrl) || val.signedUrl || ''
+  }
+  return ''
+}
+
 async function loadProducts() {
   loading.value = true
   error.value = ''
@@ -167,7 +176,7 @@ onMounted(async () => {
         <tbody>
           <tr v-for="p in products" :key="p.id">
             <td>
-              <img v-if="p.images && p.images.length" :src="p.images[0]" alt="img" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid #eee;" />
+              <img v-if="p.images && p.images.length" :src="imageUrl(p.images[0])" alt="img" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid #eee;" />
             </td>
             <td>{{ p.name }}</td>
             <td>{{ new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(p.price || 0) }}</td>
