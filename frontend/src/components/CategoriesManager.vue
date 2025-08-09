@@ -1,7 +1,7 @@
 <template>
   <div class="categories-section">
     <div class="header">
-      <h2>Gestión de Categorías</h2>
+      <h2>Categorías</h2>
       <button @click="showModal = true" class="btn-add">
         Nueva Categoría
       </button>
@@ -53,13 +53,6 @@
             ></textarea>
           </div>
           
-          <div class="form-group">
-            <label>
-              <input v-model="form.is_active" type="checkbox" />
-              Activa
-            </label>
-          </div>
-          
           <div class="form-actions">
             <button type="button" @click="closeModal" class="btn-cancel">
               Cancelar
@@ -89,10 +82,6 @@ const currentCategoryId = ref(null)
 const form = reactive({
   name: '',
   description: '',
-  slug: '',
-  parent_id: null,
-  is_active: true,
-  sort_order: 0
 })
 
 // Cargar categorías
@@ -113,10 +102,6 @@ const saveCategory = async () => {
     const categoryData = {
       name: form.name,
       description: form.description,
-      slug: form.name.toLowerCase().replace(/\s+/g, '-'),
-      parent_id: form.parent_id,
-      is_active: form.is_active,
-      sort_order: form.sort_order
     }
     
     if (editing.value && currentCategoryId.value) {
@@ -138,8 +123,6 @@ const saveCategory = async () => {
 const editCategory = (category) => {
   form.name = category.name
   form.description = category.description
-  form.is_active = category.is_active
-  form.sort_order = category.sort_order
   currentCategoryId.value = category.id
   editing.value = true
   showModal.value = true
@@ -164,8 +147,6 @@ const closeModal = () => {
   currentCategoryId.value = null
   form.name = ''
   form.description = ''
-  form.is_active = true
-  form.sort_order = 0
 }
 
 // Lifecycle
@@ -189,22 +170,14 @@ onMounted(() => {
 }
 
 .header h2 {
-  color: #d97706;
   margin: 0;
 }
 
 .btn-add {
-  background: #f59e0b;
-  color: white;
-  border: none;
   padding: 0.75rem 1.5rem;
+  border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-weight: 500;
-}
-
-.btn-add:hover {
-  background: #d97706;
 }
 
 .categories-grid {
@@ -214,20 +187,14 @@ onMounted(() => {
 }
 
 .category-card {
-  background: white;
-  border: 2px solid #fbbf24;
-  border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(251, 191, 36, 0.1);
 }
 
 .category-card h3 {
-  color: #d97706;
   margin: 0 0 0.5rem 0;
 }
 
 .category-card p {
-  color: #6b7280;
   margin: 0 0 1rem 0;
 }
 
@@ -242,16 +209,6 @@ onMounted(() => {
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
-}
-
-.btn-edit {
-  background: #fbbf24;
-  color: white;
-}
-
-.btn-delete {
-  background: #ef4444;
-  color: white;
 }
 
 .modal {
@@ -276,7 +233,6 @@ onMounted(() => {
 }
 
 .modal-content h3 {
-  color: #d97706;
   margin: 0 0 1.5rem 0;
 }
 
@@ -287,8 +243,6 @@ onMounted(() => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #374151;
 }
 
 .form-group input,
@@ -312,31 +266,5 @@ onMounted(() => {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-}
-
-.btn-save {
-  background: #f59e0b;
-  color: white;
-}
-
-.btn-cancel {
-  background: #f3f4f6;
-  color: #374151;
-}
-
-@media (max-width: 768px) {
-  .categories-section {
-    padding: 1rem;
-  }
-  
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .categories-grid {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

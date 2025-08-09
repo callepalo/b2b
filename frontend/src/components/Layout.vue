@@ -146,8 +146,8 @@ const emit = defineEmits(['search'])
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-4) 0;
-  gap: var(--spacing-4);
+  padding: 1rem 0;
+  gap: 1rem;
 }
 
 .logo h1 {
@@ -159,26 +159,25 @@ const emit = defineEmits(['search'])
 }
 
 .logo .tagline {
-  font-size: var(--text-sm);
-  color: var(--color-gray-500);
-  margin-left: var(--spacing-2);
+  font-size: 0.875rem;
+  color: #666;
+  margin-left: 0.5rem;
 }
 
 .nav {
   display: flex;
-  gap: var(--spacing-6);
+  gap: 1rem;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-4);
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
   text-decoration: none;
-  color: var(--color-gray-600);
-  border-radius: var(--border-radius);
-  transition: var(--transition);
-  font-weight: 500;
+  color: #666;
+  border-radius: 0.25rem;
+  transition: all 0.3s ease;
 }
 
 .nav-link:hover {

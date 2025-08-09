@@ -160,7 +160,6 @@ html {
 .mb-4 { margin-bottom: 1rem; }
 
 .p-1 { padding: 0.25rem; }
-.p-2 { padding: 0.5rem; }
 .p-3 { padding: 0.75rem; }
 .p-4 { padding: 1rem; }
 
@@ -170,49 +169,6 @@ html {
   border-radius: 4px;
   font-size: 0.8rem;
   color: #495057;
-}
-
-.price {
-  font-weight: bold;
-  color: #28a745;
-  font-size: 1.2rem;
-}
-
-.sku {
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.attributes {
-  margin-top: 0.5rem;
-}
-
-.attributes span {
-  display: inline-block;
-  background: #f8f9fa;
-  padding: 0.25rem 0.5rem;
-  margin: 0.25rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-}
-</style>
-
-<style scoped>
-.app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-family: system-ui, -apple-system, sans-serif;
-}
-
-.header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.header h1 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
 }
 
 .status {
