@@ -4,7 +4,6 @@ from pydantic import BaseModel
 import uuid
 import os
 from supabase_client import get_supabase
-from supabase.lib.storage.types import FileOptions
 
 router = APIRouter()
 
@@ -146,8 +145,23 @@ async def upload_product_image(product_id: str, file: UploadFile = File(...)):
 
     try:
         bucket = sb.storage.from_('product-images')
-        opts = FileOptions(content_type=(file.content_type or "application/octet-stream"), upsert=True)
-        bucket.upload(key, content, file_options=opts)
+        # Preparar opciones compatibles para distintas versiones de supabase-py
+        content_type = file.content_type or "application/octet-stream"
+        opts_dict_bool = {"contentType": content_type, "upsert": True}
+        opts_dict_str = {"contentType": content_type, "upsert": "true"}
+        # 1) Intento con keyword file_options y dict con bool
+        try:
+            bucket.upload(key, content, file_options=opts_dict_bool)
+        except TypeError:
+            # 2) Algunas versiones aceptan el dict como 3er argumento posicional
+            try:
+                bucket.upload(key, content, opts_dict_bool)
+            except Exception:
+                # 3) Algunas versiones esperan 'upsert' como string 'true'
+                try:
+                    bucket.upload(key, content, file_options=opts_dict_str)
+                except TypeError:
+                    bucket.upload(key, content, opts_dict_str)
         public_raw = bucket.get_public_url(key)
         # Normalizar a string por si la librería retorna un objeto
         public = None
