@@ -1,8 +1,9 @@
 <script setup>
-import ApiTest from './components/ApiTest.vue'
+import ProductsManager from './components/ProductsManager.vue'
 </script>
 
 <template>
+  <ProductsManager />
 </template>
 
 <style scoped>
