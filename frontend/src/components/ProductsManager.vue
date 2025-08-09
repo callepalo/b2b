@@ -15,6 +15,7 @@ const form = ref({
   stock_quantity: 0,
   category_id: ''
 })
+const imageFile = ref(null)
 
 const isEditing = computed(() => !!editingId.value)
 
@@ -49,6 +50,7 @@ function resetForm() {
     stock_quantity: 0,
     category_id: ''
   }
+  imageFile.value = null
 }
 
 async function submitForm() {
@@ -58,10 +60,18 @@ async function submitForm() {
     // Convert empty category to null
     if (!payload.category_id) payload.category_id = null
 
+    let productId = editingId.value
     if (isEditing.value) {
-      await api.updateProduct(editingId.value, payload)
+      const updated = await api.updateProduct(editingId.value, payload)
+      productId = updated.id
     } else {
-      await api.createProduct(payload)
+      const created = await api.createProduct(payload)
+      productId = created.id
+    }
+
+    // If image selected, upload it
+    if (imageFile.value) {
+      await api.uploadProductImage(productId, imageFile.value)
     }
     resetForm()
     await loadProducts()
@@ -79,6 +89,7 @@ function startEdit(p) {
     stock_quantity: p.stock_quantity ?? 0,
     category_id: p.category_id || ''
   }
+  imageFile.value = null
 }
 
 async function removeProduct(id) {
@@ -129,6 +140,10 @@ onMounted(async () => {
           <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
         </select>
       </div>
+      <div class="row">
+        <label>Imagen</label>
+        <input type="file" accept="image/*" @change="e => imageFile.value = e.target.files?.[0] || null" />
+      </div>
       <div class="actions">
         <button type="submit">{{ isEditing ? 'Guardar cambios' : 'Crear' }}</button>
         <button type="button" v-if="isEditing" @click="resetForm">Cancelar</button>
@@ -141,6 +156,7 @@ onMounted(async () => {
       <table v-else>
         <thead>
           <tr>
+            <th>Imagen</th>
             <th>Nombre</th>
             <th>Precio</th>
             <th>Stock</th>
@@ -150,6 +166,9 @@ onMounted(async () => {
         </thead>
         <tbody>
           <tr v-for="p in products" :key="p.id">
+            <td>
+              <img v-if="p.images && p.images.length" :src="p.images[0]" alt="img" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid #eee;" />
+            </td>
             <td>{{ p.name }}</td>
             <td>{{ new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(p.price || 0) }}</td>
             <td>{{ p.stock_quantity }}</td>

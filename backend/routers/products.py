@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from typing import List, Optional
 from pydantic import BaseModel
 import uuid
+import os
 from supabase_client import get_supabase
 
 router = APIRouter()
@@ -121,3 +122,37 @@ async def delete_product(product_id: str):
     if not data:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     return {"message": "Producto eliminado exitosamente", "data": data[0]}
+
+@router.post("/products/{product_id}/image")
+async def upload_product_image(product_id: str, file: UploadFile = File(...)):
+    """Subir imagen de producto a Supabase Storage y actualizar el array images."""
+    sb = get_supabase()
+
+    # Verificar que el producto exista y obtener sus imágenes actuales
+    prod_resp = sb.table('products').select('id, images').eq('id', product_id).limit(1).execute()
+    prod_data = prod_resp.data or []
+    if not prod_data:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    # Preparar path/nombre del archivo
+    _, ext = os.path.splitext(file.filename or '')
+    ext = (ext or '').lower() or '.jpg'
+    key = f"{product_id}/{uuid.uuid4()}{ext}"
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Archivo vacío")
+
+    try:
+        bucket = sb.storage.from_('product-images')
+        bucket.upload(key, content, {"contentType": file.content_type or "application/octet-stream", "upsert": True})
+        public = bucket.get_public_url(key)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error subiendo imagen: {e}")
+
+    # Actualizar el array de imágenes del producto
+    images = prod_data[0].get('images') or []
+    images.append(public)
+    sb.table('products').update({"images": images}).eq('id', product_id).execute()
+
+    return {"url": public, "images": images}

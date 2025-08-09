@@ -41,6 +41,22 @@ export const api = {
   deleteProduct(id) {
     return http('DELETE', `/api/v1/products/${id}`);
   },
+  uploadProductImage(id, file) {
+    const form = new FormData();
+    form.append('file', file);
+    return fetch(`${BASE_URL}/api/v1/products/${id}/image`, {
+      method: 'POST',
+      body: form,
+    }).then(async (res) => {
+      const text = await res.text();
+      let data; try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+      if (!res.ok) {
+        const msg = (data && (data.detail || data.message)) || res.statusText;
+        throw new Error(`HTTP ${res.status}: ${msg}`);
+      }
+      return data;
+    });
+  },
   // Categories
   listCategories(params = {}) {
     const q = new URLSearchParams();
