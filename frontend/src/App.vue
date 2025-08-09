@@ -12,28 +12,41 @@ const tabs = [
 
 <template>
   <div class="app">
-    <nav class="tabs">
-      <button
-        v-for="t in tabs"
-        :key="t.key"
-        :class="['tab', { active: tab === t.key }]"
-        @click="tab = t.key"
-      >
-        {{ t.label }}
-      </button>
-    </nav>
+    <header class="header">
+      <div class="container">
+        <h1 class="brand">Dulpromax Admin</h1>
+        <nav class="tabs">
+          <button
+            v-for="t in tabs"
+            :key="t.key"
+            :class="['tab', { active: tab === t.key }]"
+            @click="tab = t.key"
+          >
+            {{ t.label }}
+          </button>
+        </nav>
+      </div>
+    </header>
 
-    <section class="content">
+    <main class="main">
       <ProductsManager v-if="tab === 'products'" />
       <CategoriesManager v-else />
-    </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container">© {{ new Date().getFullYear() }} Dulpromax — Panel de gestión</div>
+    </footer>
   </div>
- </template>
+</template>
 
 <style scoped>
-.app { max-width: 1100px; margin: 0 auto; padding: 12px; }
-.tabs { display: flex; gap: 8px; border-bottom: 1px solid #eee; margin-bottom: 12px; }
-.tab { padding: 8px 12px; border: 1px solid #ccc; border-bottom: none; background: #fafafa; cursor: pointer; border-top-left-radius: 6px; border-top-right-radius: 6px; }
-.tab.active { background: #fff; font-weight: 600; }
-.content { background: #fff; }
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.container { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+.header { border-bottom: 1px solid #eee; background: #fff; }
+.brand { font-size: 18px; margin: 0; padding: 12px 0; }
+.tabs { display: flex; gap: 8px; padding-bottom: 12px; }
+.tab { padding: 8px 12px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; border-radius: 6px; }
+.tab.active { background: #fff; border-color: #bbb; font-weight: 600; }
+.main { flex: 1; padding: 16px 0; }
+.footer { border-top: 1px solid #eee; padding: 12px 0; background: #fff; font-size: 12px; color: #666; }
 </style>
