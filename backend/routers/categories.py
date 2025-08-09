@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel
 import uuid
+from supabase_client import get_supabase
 
 router = APIRouter()
 
@@ -30,86 +31,58 @@ class CategoryResponse(BaseModel):
     data: List[Category]
     total: int
 
-# Datos de ejemplo
-MOCK_CATEGORIES = [
-    {
-        "id": "550e8400-e29b-41d4-a716-446655440001",
-        "name": "Proteínas",
-        "description": "Suplementos proteicos en polvo y listos para consumir",
-        "slug": "proteinas",
-        "parent_id": None,
-        "image_url": None,
-        "is_active": True,
-        "sort_order": 1,
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z"
-    },
-    {
-        "id": "550e8400-e29b-41d4-a716-446655440002",
-        "name": "Snacks Saludables",
-        "description": "Snacks bajos en azúcar y ricos en nutrientes",
-        "slug": "snacks-saludables",
-        "parent_id": None,
-        "image_url": None,
-        "is_active": True,
-        "sort_order": 2,
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z"
-    }
-]
-
 @router.get("/categories")
 async def get_categories():
     """Obtener todas las categorías"""
-    return {
-        "data": MOCK_CATEGORIES,
-        "total": len(MOCK_CATEGORIES)
-    }
+    sb = get_supabase()
+    resp = sb.table('categories').select('*', count='exact').order('sort_order').execute()
+    data = resp.data or []
+    total = resp.count if hasattr(resp, 'count') else len(data)
+    return {"data": data, "total": total}
 
 @router.get("/categories/{category_id}")
 async def get_category(category_id: str):
     """Obtener una categoría específica"""
-    category = next((c for c in MOCK_CATEGORIES if c["id"] == category_id), None)
-    if not category:
+    sb = get_supabase()
+    resp = sb.table('categories').select('*').eq('id', category_id).limit(1).execute()
+    data = resp.data or []
+    if not data:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
-    return category
+    return data[0]
 
 @router.post("/categories")
 async def create_category(category: CategoryCreate):
     """Crear una nueva categoría"""
-    new_category = {
-        "id": str(uuid.uuid4()),
-        **category.dict(),
-        "image_url": None,
+    sb = get_supabase()
+    payload = {
+        **category.model_dump(),
+        # id/created_at/updated_at pueden venir por default desde la DB
         "is_active": True,
         "sort_order": 0,
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z"
     }
-    MOCK_CATEGORIES.append(new_category)
-    return new_category
+    resp = sb.table('categories').insert(payload).execute()
+    data = resp.data or []
+    if not data:
+        raise HTTPException(status_code=500, detail="No se pudo crear la categoría")
+    return data[0]
 
 @router.put("/categories/{category_id}")
 async def update_category(category_id: str, category: CategoryCreate):
     """Actualizar una categoría existente"""
-    category_index = next((i for i, c in enumerate(MOCK_CATEGORIES) if c["id"] == category_id), None)
-    if category_index is None:
+    sb = get_supabase()
+    payload = category.model_dump()
+    resp = sb.table('categories').update(payload).eq('id', category_id).execute()
+    data = resp.data or []
+    if not data:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
-    
-    updated_category = {
-        **MOCK_CATEGORIES[category_index],
-        **category.dict(),
-        "updated_at": "2024-01-01T00:00:00Z"
-    }
-    MOCK_CATEGORIES[category_index] = updated_category
-    return updated_category
+    return data[0]
 
 @router.delete("/categories/{category_id}")
 async def delete_category(category_id: str):
     """Eliminar una categoría"""
-    category_index = next((i for i, c in enumerate(MOCK_CATEGORIES) if c["id"] == category_id), None)
-    if category_index is None:
+    sb = get_supabase()
+    resp = sb.table('categories').delete().eq('id', category_id).execute()
+    data = resp.data or []
+    if not data:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
-    
-    deleted_category = MOCK_CATEGORIES.pop(category_index)
-    return {"message": "Categoría eliminada exitosamente", "data": deleted_category}
+    return {"message": "Categoría eliminada exitosamente", "data": data[0]}
