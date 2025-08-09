@@ -41,8 +41,25 @@ export const api = {
   deleteProduct(id) {
     return http('DELETE', `/api/v1/products/${id}`);
   },
-  // Categories (for select)
-  listCategories() {
-    return http('GET', '/api/v1/categories');
+  // Categories
+  listCategories(params = {}) {
+    const q = new URLSearchParams();
+    if (params.page) q.set('page', params.page);
+    if (params.per_page) q.set('per_page', params.per_page);
+    if (params.search) q.set('search', params.search);
+    const qs = q.toString();
+    return http('GET', `/api/v1/categories${qs ? `?${qs}` : ''}`);
+  },
+  getCategory(id) {
+    return http('GET', `/api/v1/categories/${id}`);
+  },
+  createCategory(payload) {
+    return http('POST', '/api/v1/categories', payload);
+  },
+  updateCategory(id, payload) {
+    return http('PUT', `/api/v1/categories/${id}`, payload);
+  },
+  deleteCategory(id) {
+    return http('DELETE', `/api/v1/categories/${id}`);
   },
 };
