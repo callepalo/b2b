@@ -127,7 +127,7 @@ async function submitForm() {
 }
 
 function addPack() {
-  packs.value.push({ pack_size: null, price: null, sku: '', barcode: '', is_active: true })
+  packs.value.push({ pack_size: null, price: null, is_active: true })
 }
 
 function removePack(idx) {
@@ -220,8 +220,6 @@ onMounted(async () => {
           <div class="packs-head">
             <span>Empaque</span>
             <span>Precio</span>
-            <span>SKU</span>
-            <span>Barcode</span>
             <span>Activo</span>
             <span></span>
           </div>
@@ -229,8 +227,6 @@ onMounted(async () => {
           <div v-for="(pk, idx) in packs" :key="idx" class="packs-row">
             <input type="number" min="1" step="1" v-model.number="pk.pack_size" placeholder="Ej: 10" />
             <input type="number" min="0" step="0.01" v-model.number="pk.price" placeholder="Precio" />
-            <input type="text" v-model="pk.sku" placeholder="SKU opcional" />
-            <input type="text" v-model="pk.barcode" placeholder="Código opcional" />
             <input type="checkbox" v-model="pk.is_active" />
             <button type="button" class="danger" @click="removePack(idx)">Quitar</button>
           </div>
@@ -330,7 +326,7 @@ button.danger { border-color: #d33; color: #d33; }
 
 /* Packs UI */
 .packs { display: flex; flex-direction: column; gap: 8px; border: 1px solid #eee; border-radius: 6px; padding: 8px; }
-.packs-head, .packs-row { display: grid; grid-template-columns: 100px 140px 1fr 1fr 80px 80px; gap: 8px; align-items: center; }
+.packs-head, .packs-row { display: grid; grid-template-columns: 120px 160px 80px 100px; gap: 8px; align-items: center; }
 .packs-head { font-size: 12px; color: #666; }
 .packs-empty { font-size: 12px; color: #888; padding: 6px 0; }
 .packs-actions { display: flex; justify-content: flex-start; }
