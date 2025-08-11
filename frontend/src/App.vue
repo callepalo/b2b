@@ -125,7 +125,7 @@ async function doLogout() {
 .gradient-bar { height: 3px; background: linear-gradient(90deg, #f1c40f, #f5deb3, #f1c40f); }
 .header-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px; padding: 10px 0; }
 .brand-wrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.brand-logo { width: 70px; height: 48px; object-fit: cover; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+.brand-logo { width: 100px; height: 48px; object-fit: cover; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
 .brand-meta { display: flex; flex-direction: column; min-width: 0; }
 .brand { font-size: 18px; line-height: 1; margin: 0; }
 .brand-sub { font-size: 12px; color: #777; }
