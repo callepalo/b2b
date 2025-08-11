@@ -111,6 +111,10 @@ async function submitForm() {
     const payload = { ...form.value }
     // Convert empty category to null
     if (!payload.category_id) payload.category_id = null
+    // Validación requerida: la categoría no puede ser null/empty
+    if (payload.category_id == null) {
+      throw new Error('Debes seleccionar una categoría')
+    }
     // Si hay presentaciones, derivar precio base como el menor precio activo
     if (hasPacks.value && minPackPrice.value != null) {
       payload.price = minPackPrice.value
@@ -253,7 +257,7 @@ onMounted(async () => {
       </div>
       <div class="row">
         <label>Categoría</label>
-        <select v-model="form.category_id">
+        <select v-model="form.category_id" required>
           <option value="">(sin categoría)</option>
           <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
         </select>

@@ -155,6 +155,9 @@ async def create_product(product: ProductCreate):
     """Crear un nuevo producto"""
     sb = get_supabase()
     payload = product.model_dump()
+    # Validación: la base exige category_id NOT NULL
+    if payload.get("category_id") in (None, ""):
+        raise HTTPException(status_code=400, detail="La categoría es obligatoria")
     # Generate unique slug
     base = _base_slug(product.name)
     slug = _unique_slug(sb, base)
@@ -179,6 +182,9 @@ async def update_product(product_id: str, product: ProductCreate):
     """Actualizar un producto existente"""
     sb = get_supabase()
     payload = product.model_dump()
+    # Validación: la base exige category_id NOT NULL
+    if payload.get("category_id") in (None, ""):
+        raise HTTPException(status_code=400, detail="La categoría es obligatoria")
     # Mantener slug en sync con el nombre si cambia, asegurando unicidad (excluyendo el propio producto)
     base = _base_slug(product.name)
     slug = _unique_slug(sb, base, exclude_id=product_id)
