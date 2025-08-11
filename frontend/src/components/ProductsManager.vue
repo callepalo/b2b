@@ -23,7 +23,7 @@ const imageFile = ref(null)
 const isEditing = computed(() => !!editingId.value)
 const hasPacks = computed(() => (packs.value?.length || 0) > 0)
 const minPackPrice = computed(() => {
-  const active = (packs.value || []).filter(p => p && (p.is_active ?? true) && p.price != null)
+  const active = (packs.value || []).filter(p => p && (p.is_active ?? true) && p.price != null && Number(p.pack_size) >= 1)
   if (!active.length) return null
   return Math.min(...active.map(p => Number(p.price) || 0))
 })
@@ -129,6 +129,12 @@ async function submitForm() {
     if (imageFile.value) {
       await api.uploadProductImage(productId, imageFile.value)
     }
+    // Validación de presentaciones antes de sincronizar
+    const invalidPacks = (packs.value || []).filter(pk => !(Number(pk.pack_size) >= 1) || pk.price == null || isNaN(Number(pk.price)) || Number(pk.price) < 0)
+    if (invalidPacks.length) {
+      throw new Error('Hay presentaciones inválidas. Verifica que el Empaque sea >= 1 y el Precio sea un número válido (>= 0).')
+    }
+
     // Sincronizar packs con backend (crear/actualizar/eliminar)
     try {
       // Eliminar packs que ya no estén
@@ -140,7 +146,7 @@ async function submitForm() {
       }
       // Crear o actualizar packs actuales
       for (const pk of packs.value || []) {
-        const payloadPk = { pack_size: Number(pk.pack_size) || 0, price: Number(pk.price) || 0, is_active: !!pk.is_active }
+        const payloadPk = { pack_size: Math.max(1, Number(pk.pack_size) || 0), price: Math.max(0, Number(pk.price) || 0), is_active: !!pk.is_active }
         if (pk.id) {
           await api.updateProductPack(productId, pk.id, payloadPk)
         } else {
@@ -161,7 +167,7 @@ async function submitForm() {
 }
 
 function addPack() {
-  packs.value.push({ pack_size: null, price: null, is_active: true })
+  packs.value.push({ pack_size: 1, price: 0, is_active: true })
 }
 
 function removePack(idx) {

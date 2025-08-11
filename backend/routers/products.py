@@ -17,7 +17,7 @@ def _unique_slug(sb, base: str, exclude_id: str | None = None) -> str:
     return f"{base}-{uuid.uuid4().hex[:6]}"
 from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import uuid
 import os
 from supabase_client import get_supabase
@@ -74,8 +74,8 @@ def _sync_product_price(sb, product_id: str):
 
 # Packs (presentaciones por empaque)
 class PackBase(BaseModel):
-    pack_size: int
-    price: float
+    pack_size: int = Field(..., ge=1, description="Cantidad por empaque, mínimo 1")
+    price: float = Field(..., ge=0, description="Precio del empaque, mínimo 0")
     is_active: bool = True
 
 class PackCreate(PackBase):
