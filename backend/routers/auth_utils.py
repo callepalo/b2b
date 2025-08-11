@@ -27,7 +27,9 @@ def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(bea
         raise HTTPException(status_code=500, detail="Server misconfigured: SUPABASE_JWT_SECRET missing")
 
     try:
-        payload = jwt.decode(token, secret, algorithms=[ALGORITHM])
+        # Supabase tokens include an 'aud' claim (e.g., 'authenticated').
+        # We are not setting an expected audience here, so disable audience verification.
+        payload = jwt.decode(token, secret, algorithms=[ALGORITHM], options={"verify_aud": False})
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
     except jwt.InvalidSignatureError:
