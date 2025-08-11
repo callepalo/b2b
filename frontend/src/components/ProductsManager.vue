@@ -251,7 +251,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.pm { width: 100%; margin: 16px 0; padding: 0 16px; }
+.pm { width: 980px; margin: 16px 0; padding: 0 16px; }
 .toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
 .form { border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
 .row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
