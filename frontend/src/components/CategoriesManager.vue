@@ -5,6 +5,7 @@ import { api } from '../services/api'
 const categories = ref([])
 const loading = ref(false)
 const error = ref('')
+const showForm = ref(false)
 
 const editingId = ref(null)
 const form = ref({
@@ -32,6 +33,7 @@ async function loadCategories() {
 function resetForm() {
   editingId.value = null
   form.value = { name: '', description: '', slug: '', parent_id: '' }
+  showForm.value = false
 }
 
 async function submitForm() {
@@ -60,6 +62,7 @@ function startEdit(c) {
     slug: c.slug || '',
     parent_id: c.parent_id || ''
   }
+  showForm.value = true
 }
 
 async function removeCategory(id) {
@@ -81,7 +84,14 @@ onMounted(loadCategories)
 
     <div v-if="error" class="error">{{ error }}</div>
 
-    <form class="form" @submit.prevent="submitForm">
+    <div class="toolbar">
+      <button v-if="!isEditing" @click="showForm = !showForm" type="button">
+        {{ showForm ? 'Cerrar' : 'Crear categoría' }}
+      </button>
+      <button v-else type="button" @click="resetForm">Salir de edición</button>
+    </div>
+
+    <form v-if="showForm || isEditing" class="form" @submit.prevent="submitForm">
       <h2>{{ isEditing ? 'Editar categoría' : 'Crear categoría' }}</h2>
       <div class="row">
         <label>Nombre</label>
@@ -138,6 +148,7 @@ onMounted(loadCategories)
 
 <style scoped>
 .cm { max-width: 960px; margin: 24px auto; padding: 0 12px; }
+.toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
 .form { border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
 .row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
 label { font-size: 12px; color: #555; }

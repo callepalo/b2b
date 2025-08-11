@@ -6,6 +6,7 @@ const products = ref([])
 const categories = ref([])
 const loading = ref(false)
 const error = ref('')
+const showForm = ref(false)
 
 const editingId = ref(null)
 const form = ref({
@@ -91,6 +92,7 @@ function resetForm() {
     category_id: ''
   }
   imageFile.value = null
+  showForm.value = false
 }
 
 async function submitForm() {
@@ -130,6 +132,7 @@ function startEdit(p) {
     category_id: p.category_id || ''
   }
   imageFile.value = null
+  showForm.value = true
 }
 
 function onFileChange(e) {
@@ -158,7 +161,14 @@ onMounted(async () => {
 
     <div v-if="error" class="error">{{ error }}</div>
 
-    <form class="form" @submit.prevent="submitForm">
+    <div class="toolbar">
+      <button v-if="!isEditing" @click="showForm = !showForm" type="button">
+        {{ showForm ? 'Cerrar' : 'Crear producto' }}
+      </button>
+      <button v-else type="button" @click="resetForm">Salir de edición</button>
+    </div>
+
+    <form v-if="showForm || isEditing" class="form" @submit.prevent="submitForm">
       <h2>{{ isEditing ? 'Editar producto' : 'Crear producto' }}</h2>
       <div class="row">
         <label>Nombre</label>
@@ -242,6 +252,7 @@ onMounted(async () => {
 
 <style scoped>
 .pm { width: 100%; margin: 16px 0; padding: 0 16px; }
+.toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
 .form { border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
 .row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
 .row.two { flex-direction: row; gap: 12px; }
