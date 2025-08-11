@@ -6,6 +6,7 @@ const state = reactive({
   profile: null,
   loading: true,
   error: null,
+  lastProfileResponse: null,
 })
 
 async function init() {
@@ -32,10 +33,17 @@ async function fetchProfile() {
     const res = await fetch(`${base}/api/v1/profiles/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-    if (!res.ok) throw new Error(await res.text())
-    state.profile = await res.json()
+    const text = await res.text()
+    let data = null
+    try { data = text ? JSON.parse(text) : null } catch { /* keep raw */ }
+    state.lastProfileResponse = data || text || null
+    if (!res.ok) {
+      const msg = (data && (data.detail || data.message)) || text || res.statusText
+      throw new Error(msg)
+    }
+    state.profile = data
   } catch (e) {
-    state.error = String(e)
+    state.error = String(e?.message || e)
   }
 }
 
@@ -68,4 +76,5 @@ export const auth = {
   signOut,
   getAccessToken,
   isAdmin,
+  fetchProfile,
 }
