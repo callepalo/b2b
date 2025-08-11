@@ -15,6 +15,7 @@ const tabs = [
     <header class="header">
       <div class="container">
         <h1 class="brand">Dulpromax Admin</h1>
+        <img src="@/assets/logo.png" alt="Logo" width="200" height="200"/>
         <nav class="tabs">
           <button
             v-for="t in tabs"
