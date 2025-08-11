@@ -7,6 +7,7 @@ const categories = ref([])
 const loading = ref(false)
 const error = ref('')
 const showForm = ref(false)
+const packs = ref([]) // Presentaciones del producto (frontend-only por ahora)
 
 const editingId = ref(null)
 const form = ref({
@@ -19,6 +20,7 @@ const form = ref({
 const imageFile = ref(null)
 
 const isEditing = computed(() => !!editingId.value)
+const hasPacks = computed(() => (packs.value?.length || 0) > 0)
 
 function imageUrl(val) {
   if (!val) return ''
@@ -93,6 +95,7 @@ function resetForm() {
   }
   imageFile.value = null
   showForm.value = false
+  packs.value = []
 }
 
 async function submitForm() {
@@ -115,11 +118,20 @@ async function submitForm() {
     if (imageFile.value) {
       await api.uploadProductImage(productId, imageFile.value)
     }
+    // TODO: Cuando exista el endpoint, iterar packs.value y sincronizarlos (crear/editar/eliminar)
     resetForm()
     await loadProducts()
   } catch (e) {
     error.value = e.message || String(e)
   }
+}
+
+function addPack() {
+  packs.value.push({ pack_size: null, price: null, sku: '', barcode: '', is_active: true })
+}
+
+function removePack(idx) {
+  packs.value.splice(idx, 1)
 }
 
 function startEdit(p) {
@@ -133,6 +145,8 @@ function startEdit(p) {
   }
   imageFile.value = null
   showForm.value = true
+  // Cuando el backend soporte packs, aquí cargaremos packs reales del producto
+  packs.value = []
 }
 
 function onFileChange(e) {
@@ -199,6 +213,34 @@ onMounted(async () => {
         <label>Imagen</label>
         <input type="file" accept="image/*" @change="onFileChange" />
       </div>
+
+      <div class="row">
+        <label>Presentaciones (empaques)</label>
+        <div class="packs">
+          <div class="packs-head">
+            <span>Empaque</span>
+            <span>Precio</span>
+            <span>SKU</span>
+            <span>Barcode</span>
+            <span>Activo</span>
+            <span></span>
+          </div>
+          <div v-if="!packs.length" class="packs-empty">No hay presentaciones agregadas.</div>
+          <div v-for="(pk, idx) in packs" :key="idx" class="packs-row">
+            <input type="number" min="1" step="1" v-model.number="pk.pack_size" placeholder="Ej: 10" />
+            <input type="number" min="0" step="0.01" v-model.number="pk.price" placeholder="Precio" />
+            <input type="text" v-model="pk.sku" placeholder="SKU opcional" />
+            <input type="text" v-model="pk.barcode" placeholder="Código opcional" />
+            <input type="checkbox" v-model="pk.is_active" />
+            <button type="button" class="danger" @click="removePack(idx)">Quitar</button>
+          </div>
+          <div class="packs-actions">
+            <button type="button" @click="addPack">Añadir presentación</button>
+          </div>
+        </div>
+        <small class="hint">Ejemplos: 10, 50, 100. Más adelante el cliente podrá elegir la presentación al hacer el pedido.</small>
+      </div>
+
       <div class="actions">
         <button type="submit">{{ isEditing ? 'Guardar cambios' : 'Crear' }}</button>
         <button type="button" v-if="isEditing" @click="resetForm">Cancelar</button>
@@ -285,4 +327,12 @@ button.danger { border-color: #d33; color: #d33; }
 .category { color: #777; font-size: 12px; }
 .card-actions { display: flex; gap: 8px; margin-top: 8px; }
 .error { color: #d33; margin-bottom: 8px; }
+
+/* Packs UI */
+.packs { display: flex; flex-direction: column; gap: 8px; border: 1px solid #eee; border-radius: 6px; padding: 8px; }
+.packs-head, .packs-row { display: grid; grid-template-columns: 100px 140px 1fr 1fr 80px 80px; gap: 8px; align-items: center; }
+.packs-head { font-size: 12px; color: #666; }
+.packs-empty { font-size: 12px; color: #888; padding: 6px 0; }
+.packs-actions { display: flex; justify-content: flex-start; }
+.hint { color: #777; font-size: 12px; }
 </style>
