@@ -8,6 +8,7 @@ const loading = ref(false)
 const error = ref('')
 const showForm = ref(false)
 const packs = ref([]) // Presentaciones del producto (frontend-only por ahora)
+const originalPackIds = ref([]) // IDs originales para detectar eliminaciones
 
 const editingId = ref(null)
 const form = ref({
@@ -21,6 +22,11 @@ const imageFile = ref(null)
 
 const isEditing = computed(() => !!editingId.value)
 const hasPacks = computed(() => (packs.value?.length || 0) > 0)
+const minPackPrice = computed(() => {
+  const active = (packs.value || []).filter(p => p && (p.is_active ?? true) && p.price != null)
+  if (!active.length) return null
+  return Math.min(...active.map(p => Number(p.price) || 0))
+})
 
 function imageUrl(val) {
   if (!val) return ''
@@ -96,6 +102,7 @@ function resetForm() {
   imageFile.value = null
   showForm.value = false
   packs.value = []
+  originalPackIds.value = []
 }
 
 async function submitForm() {
@@ -104,6 +111,10 @@ async function submitForm() {
     const payload = { ...form.value }
     // Convert empty category to null
     if (!payload.category_id) payload.category_id = null
+    // Si hay presentaciones, derivar precio base como el menor precio activo
+    if (hasPacks.value && minPackPrice.value != null) {
+      payload.price = minPackPrice.value
+    }
 
     let productId = editingId.value
     if (isEditing.value) {
@@ -118,7 +129,30 @@ async function submitForm() {
     if (imageFile.value) {
       await api.uploadProductImage(productId, imageFile.value)
     }
-    // TODO: Cuando exista el endpoint, iterar packs.value y sincronizarlos (crear/editar/eliminar)
+    // Sincronizar packs con backend (crear/actualizar/eliminar)
+    try {
+      // Eliminar packs que ya no estén
+      const currentIds = new Set((packs.value || []).map(p => p.id).filter(Boolean))
+      for (const oldId of originalPackIds.value || []) {
+        if (!currentIds.has(oldId)) {
+          await api.deleteProductPack(productId, oldId)
+        }
+      }
+      // Crear o actualizar packs actuales
+      for (const pk of packs.value || []) {
+        const payloadPk = { pack_size: Number(pk.pack_size) || 0, price: Number(pk.price) || 0, is_active: !!pk.is_active }
+        if (pk.id) {
+          await api.updateProductPack(productId, pk.id, payloadPk)
+        } else {
+          const created = await api.createProductPack(productId, payloadPk)
+          pk.id = created.id
+        }
+      }
+    } catch (e) {
+      console.warn('Error sincronizando presentaciones:', e)
+      // No hacemos throw para no bloquear el guardado del producto; mostramos error en UI
+      error.value = (error.value ? error.value + ' | ' : '') + (e.message || String(e))
+    }
     resetForm()
     await loadProducts()
   } catch (e) {
@@ -145,8 +179,13 @@ function startEdit(p) {
   }
   imageFile.value = null
   showForm.value = true
-  // Cuando el backend soporte packs, aquí cargaremos packs reales del producto
+  // Cargar packs reales del producto
   packs.value = []
+  originalPackIds.value = []
+  api.listProductPacks(p.id).then((rows) => {
+    packs.value = Array.isArray(rows) ? rows : []
+    originalPackIds.value = (packs.value || []).map(r => r.id).filter(Boolean)
+  }).catch(() => { /* ignore */ })
 }
 
 function onFileChange(e) {
@@ -193,9 +232,13 @@ onMounted(async () => {
         <textarea v-model="form.description" rows="3" />
       </div>
       <div class="row two">
-        <div>
+        <div v-if="!hasPacks">
           <label>Precio</label>
           <input v-model.number="form.price" type="number" step="0.01" min="0" required />
+        </div>
+        <div v-else>
+          <label>Precio base</label>
+          <input :value="minPackPrice != null ? minPackPrice : 0" type="number" step="0.01" min="0" disabled />
         </div>
         <div>
           <label>Stock</label>

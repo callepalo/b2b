@@ -57,6 +57,39 @@ class ProductResponse(BaseModel):
     page: int
     per_page: int
 
+# Helpers
+def _sync_product_price(sb, product_id: str):
+    """Sincroniza products.price con el menor precio de packs activos, si existen.
+    Si no hay packs activos, no cambia el precio (mantiene valor actual).
+    """
+    try:
+        r = sb.table('product_pack_options').select('price, is_active').eq('product_id', product_id).eq('is_active', True).execute()
+        rows = r.data or []
+        if rows:
+            min_price = min([(row.get('price') or 0) for row in rows])
+            sb.table('products').update({'price': float(min_price)}).eq('id', product_id).execute()
+    except Exception:
+        # No elevar: no debe romper el flujo si falla la sincronización
+        pass
+
+# Packs (presentaciones por empaque)
+class PackBase(BaseModel):
+    pack_size: int
+    price: float
+    is_active: bool = True
+
+class PackCreate(PackBase):
+    pass
+
+class Pack(PackBase):
+    id: str
+    product_id: str
+    created_at: str
+    updated_at: str
+
+    class Config:
+        from_attributes = True
+
 @router.get("/products", response_model=ProductResponse)
 async def get_products(
     page: int = Query(1, ge=1),
@@ -192,3 +225,61 @@ async def upload_product_image(product_id: str, file: UploadFile = File(...)):
     sb.table('products').update({"images": images}).eq('id', product_id).execute()
 
     return {"url": public, "images": images}
+
+# ==========================
+# Packs: CRUD de presentaciones
+# ==========================
+
+@router.get("/products/{product_id}/packs", response_model=List[Pack])
+async def list_product_packs(product_id: str):
+    sb = get_supabase()
+    resp = sb.table('product_pack_options').select('*').eq('product_id', product_id).order('pack_size', desc=False).execute()
+    return resp.data or []
+
+@router.post("/products/{product_id}/packs", response_model=Pack)
+async def create_product_pack(product_id: str, pack: PackCreate):
+    sb = get_supabase()
+    # Asegurar que producto existe (opcional, para mejor error)
+    prod = sb.table('products').select('id').eq('id', product_id).limit(1).execute().data or []
+    if not prod:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    payload = pack.model_dump()
+    payload['product_id'] = product_id
+    try:
+        resp = sb.table('product_pack_options').insert(payload).execute()
+    except Exception as e:
+        # Puede fallar por unique (product_id, pack_size)
+        raise HTTPException(status_code=400, detail=f"No se pudo crear la presentación: {e}")
+    data = resp.data or []
+    if not data:
+        raise HTTPException(status_code=500, detail="No se pudo crear la presentación")
+    # Sincronizar precio base del producto con el menor pack activo
+    _sync_product_price(sb, product_id)
+    return data[0]
+
+@router.put("/products/{product_id}/packs/{pack_id}", response_model=Pack)
+async def update_product_pack(product_id: str, pack_id: str, pack: PackCreate):
+    sb = get_supabase()
+    # Validar existencia
+    exists = sb.table('product_pack_options').select('id').eq('id', pack_id).eq('product_id', product_id).limit(1).execute().data or []
+    if not exists:
+        raise HTTPException(status_code=404, detail="Presentación no encontrada")
+    try:
+        resp = sb.table('product_pack_options').update(pack.model_dump()).eq('id', pack_id).eq('product_id', product_id).execute()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"No se pudo actualizar la presentación: {e}")
+    data = resp.data or []
+    if not data:
+        raise HTTPException(status_code=500, detail="No se pudo actualizar la presentación")
+    _sync_product_price(sb, product_id)
+    return data[0]
+
+@router.delete("/products/{product_id}/packs/{pack_id}")
+async def delete_product_pack(product_id: str, pack_id: str):
+    sb = get_supabase()
+    resp = sb.table('product_pack_options').delete().eq('id', pack_id).eq('product_id', product_id).execute()
+    data = resp.data or []
+    if not data:
+        raise HTTPException(status_code=404, detail="Presentación no encontrada")
+    _sync_product_price(sb, product_id)
+    return {"message": "Presentación eliminada", "data": data[0]}

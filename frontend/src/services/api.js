@@ -57,6 +57,19 @@ export const api = {
       return data;
     });
   },
+  // Product Packs
+  listProductPacks(productId) {
+    return http('GET', `/api/v1/products/${productId}/packs`);
+  },
+  createProductPack(productId, payload) {
+    return http('POST', `/api/v1/products/${productId}/packs`, payload);
+  },
+  updateProductPack(productId, packId, payload) {
+    return http('PUT', `/api/v1/products/${productId}/packs/${packId}`, payload);
+  },
+  deleteProductPack(productId, packId) {
+    return http('DELETE', `/api/v1/products/${productId}/packs/${packId}`);
+  },
   // Categories
   listCategories(params = {}) {
     const q = new URLSearchParams();
