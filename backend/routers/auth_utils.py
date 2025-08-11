@@ -28,22 +28,34 @@ def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(bea
 
     try:
         payload = jwt.decode(token, secret, algorithms=[ALGORITHM])
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
+    except jwt.InvalidSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token signature (check SUPABASE_JWT_SECRET)")
+    except jwt.PyJWTError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid token: {e}")
 
     user_id = payload.get('sub') or payload.get('user_id') or payload.get('uid')
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject")
 
-    # Cargar perfil
+    # Cargar perfil con varias estrategias: id, user_id, email
     sb = get_supabase()
-    prof = sb.table('profiles').select('id,email,role').eq('id', user_id).limit(1).execute().data or []
+    email_claim = payload.get('email')
+    # 1) Buscar por id (lo esperado si id = auth.users.id)
+    sel = 'id,email,role,user_id'
+    prof = sb.table('profiles').select(sel).eq('id', user_id).limit(1).execute().data or []
     if not prof:
-        # Crear placeholder si no existe (raro si trigger está activo)
-        email = payload.get('email')
-        return CurrentUser(user_id=user_id, email=email, role=None)
+        # 2) Algunos esquemas usan columna user_id
+        prof = sb.table('profiles').select(sel).eq('user_id', user_id).limit(1).execute().data or []
+    if not prof and email_claim:
+        # 3) Fallback por email si existe
+        prof = sb.table('profiles').select(sel).eq('email', email_claim).limit(1).execute().data or []
+    if not prof:
+        # Placeholder si no existe registro
+        return CurrentUser(user_id=user_id, email=email_claim, role=None)
     p = prof[0]
-    return CurrentUser(user_id, p.get('email'), p.get('role'))
+    return CurrentUser(user_id, p.get('email') or email_claim, p.get('role'))
 
 
 def require_admin(user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
