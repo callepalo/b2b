@@ -2,9 +2,11 @@
 import { ref } from 'vue'
 import ProductsManager from './components/ProductsManager.vue'
 import CategoriesManager from './components/CategoriesManager.vue'
+import CatalogView from './components/CatalogView.vue'
 
-const tab = ref('products')
+const tab = ref('catalog')
 const tabs = [
+  { key: 'catalog', label: 'Catálogo' },
   { key: 'products', label: 'Productos' },
   { key: 'categories', label: 'Categorías' },
 ]
@@ -30,7 +32,8 @@ const tabs = [
     </header>
 
     <main class="main">
-      <ProductsManager v-if="tab === 'products'" />
+      <CatalogView v-if="tab === 'catalog'" />
+      <ProductsManager v-else-if="tab === 'products'" />
       <CategoriesManager v-else />
     </main>
 

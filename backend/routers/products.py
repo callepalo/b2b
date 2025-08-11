@@ -47,6 +47,9 @@ class Product(ProductBase):
     is_featured: bool = False
     created_at: str
     updated_at: str
+    # Campos extra para catálogo
+    packs: list = []
+    min_price: Optional[float] = None
 
     class Config:
         from_attributes = True
@@ -95,11 +98,16 @@ async def get_products(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100),
     category_id: Optional[str] = None,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    mode: Optional[str] = Query(None, description="Si es 'catalog', filtra activos y expone packs activos y min_price"),
+    expand: Optional[str] = Query(None, description="Lista separada por comas; soporta 'packs' para adjuntar presentaciones")
 ):
     """Obtener todos los productos con paginación y filtros"""
     sb = get_supabase()
     query = sb.table('products').select('*', count='exact')
+    is_catalog = (mode == 'catalog')
+    if is_catalog:
+        query = query.eq('is_active', True)
     if category_id:
         query = query.eq('category_id', category_id)
     if search:
@@ -113,6 +121,21 @@ async def get_products(
     query = query.order('created_at', desc=True).range(start, end)
     resp = query.execute()
     data = resp.data or []
+    # Expandir packs y calcular min_price si se solicita (o si es catálogo)
+    do_expand_packs = is_catalog or (expand and ('packs' in (expand or '').split(',')))
+    if do_expand_packs:
+        for item in data:
+            try:
+                q = sb.table('product_pack_options').select('id, pack_size, price, is_active').eq('product_id', item['id'])
+                if is_catalog:
+                    q = q.eq('is_active', True)
+                packs = q.order('pack_size', desc=False).execute().data or []
+                item['packs'] = packs
+                active_prices = [float(p.get('price') or 0) for p in packs if p.get('is_active')]
+                item['min_price'] = (min(active_prices) if active_prices else None)
+            except Exception:
+                item['packs'] = []
+                item['min_price'] = None
     total = resp.count if hasattr(resp, 'count') else len(data)
     return {"data": data, "total": total, "page": page, "per_page": per_page}
 

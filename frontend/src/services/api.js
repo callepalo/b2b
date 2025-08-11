@@ -26,6 +26,8 @@ export const api = {
     if (params.per_page) q.set('per_page', params.per_page);
     if (params.search) q.set('search', params.search);
     if (params.category_id) q.set('category_id', params.category_id);
+    if (params.mode) q.set('mode', params.mode);
+    if (params.expand) q.set('expand', params.expand);
     const qs = q.toString();
     return http('GET', `/api/v1/products${qs ? `?${qs}` : ''}`);
   },
