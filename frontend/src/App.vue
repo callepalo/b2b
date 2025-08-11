@@ -24,12 +24,14 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
+const showLogin = ref(false)
 
 async function doLogin() {
   error.value = ''
   loading.value = true
   try {
     await auth.signIn(email.value, password.value)
+    showLogin.value = false
   } catch (e) {
     error.value = String(e?.message || e)
   } finally {
@@ -40,6 +42,7 @@ async function doLogin() {
 async function doLogout() {
   await auth.signOut()
   tab.value = 'catalog'
+  showLogin.value = false
 }
 </script>
 
@@ -62,12 +65,18 @@ async function doLogout() {
           </nav>
           <div class="auth">
             <template v-if="!isLoggedIn">
-              <form class="login" @submit.prevent="doLogin">
-                <input v-model="email" type="email" placeholder="Email" required />
-                <input v-model="password" type="password" placeholder="Contraseña" required />
-                <button type="submit" :disabled="loading">{{ loading ? 'Ingresando…' : 'Ingresar' }}</button>
-              </form>
-              <p v-if="error" class="error">{{ error }}</p>
+              <div v-if="!showLogin">
+                <button class="login-toggle" type="button" @click="showLogin = true">Iniciar sesión</button>
+              </div>
+              <div v-else>
+                <form class="login" @submit.prevent="doLogin">
+                  <input v-model="email" type="email" placeholder="Email" required />
+                  <input v-model="password" type="password" placeholder="Contraseña" required />
+                  <button type="submit" :disabled="loading">{{ loading ? 'Ingresando…' : 'Ingresar' }}</button>
+                  <button type="button" class="cancel" @click="showLogin = false">Cancelar</button>
+                </form>
+                <p v-if="error" class="error">{{ error }}</p>
+              </div>
             </template>
             <template v-else>
               <span class="user">{{ auth.state.profile?.email || 'Usuario' }} ({{ auth.state.profile?.role || 'sin rol' }})</span>
@@ -105,7 +114,7 @@ async function doLogout() {
 .auth { display: flex; align-items: center; gap: 12px; }
 .login { display: flex; gap: 8px; }
 .login input { padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; }
-.login button, .logout { padding: 8px 12px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; }
+.login button, .logout, .login-toggle, .cancel { padding: 8px 12px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; }
 .user { font-size: 12px; color: #555; }
 .error { color: #b00020; font-size: 12px; margin: 0; }
 .guard { padding: 16px; border: 1px dashed #f0c; background: #fff8f8; }
