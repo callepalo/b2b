@@ -15,12 +15,13 @@ def _unique_slug(sb, base: str, exclude_id: str | None = None) -> str:
         return base
     # Append short suffix
     return f"{base}-{uuid.uuid4().hex[:6]}"
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Depends
 from typing import List, Optional
 from pydantic import BaseModel, Field
 import uuid
 import os
 from supabase_client import get_supabase
+from .auth_utils import require_admin
 
 router = APIRouter()
 
@@ -149,7 +150,7 @@ async def get_product(product_id: str):
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     return data[0]
 
-@router.post("/products", response_model=Product)
+@router.post("/products", response_model=Product, dependencies=[Depends(require_admin)])
 async def create_product(product: ProductCreate):
     """Crear un nuevo producto"""
     sb = get_supabase()
@@ -173,7 +174,7 @@ async def create_product(product: ProductCreate):
         raise HTTPException(status_code=500, detail="No se pudo crear el producto")
     return data[0]
 
-@router.put("/products/{product_id}", response_model=Product)
+@router.put("/products/{product_id}", response_model=Product, dependencies=[Depends(require_admin)])
 async def update_product(product_id: str, product: ProductCreate):
     """Actualizar un producto existente"""
     sb = get_supabase()
@@ -191,7 +192,7 @@ async def update_product(product_id: str, product: ProductCreate):
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     return data[0]
 
-@router.delete("/products/{product_id}")
+@router.delete("/products/{product_id}", dependencies=[Depends(require_admin)])
 async def delete_product(product_id: str):
     """Eliminar un producto"""
     sb = get_supabase()
@@ -201,7 +202,7 @@ async def delete_product(product_id: str):
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     return {"message": "Producto eliminado exitosamente", "data": data[0]}
 
-@router.post("/products/{product_id}/image")
+@router.post("/products/{product_id}/image", dependencies=[Depends(require_admin)])
 async def upload_product_image(product_id: str, file: UploadFile = File(...)):
     """Subir imagen de producto a Supabase Storage y actualizar el array images."""
     sb = get_supabase()
@@ -259,7 +260,7 @@ async def list_product_packs(product_id: str):
     resp = sb.table('product_pack_options').select('*').eq('product_id', product_id).order('pack_size', desc=False).execute()
     return resp.data or []
 
-@router.post("/products/{product_id}/packs", response_model=Pack)
+@router.post("/products/{product_id}/packs", response_model=Pack, dependencies=[Depends(require_admin)])
 async def create_product_pack(product_id: str, pack: PackCreate):
     sb = get_supabase()
     # Asegurar que producto existe (opcional, para mejor error)
@@ -280,7 +281,7 @@ async def create_product_pack(product_id: str, pack: PackCreate):
     _sync_product_price(sb, product_id)
     return data[0]
 
-@router.put("/products/{product_id}/packs/{pack_id}", response_model=Pack)
+@router.put("/products/{product_id}/packs/{pack_id}", response_model=Pack, dependencies=[Depends(require_admin)])
 async def update_product_pack(product_id: str, pack_id: str, pack: PackCreate):
     sb = get_supabase()
     # Validar existencia
@@ -297,7 +298,7 @@ async def update_product_pack(product_id: str, pack_id: str, pack: PackCreate):
     _sync_product_price(sb, product_id)
     return data[0]
 
-@router.delete("/products/{product_id}/packs/{pack_id}")
+@router.delete("/products/{product_id}/packs/{pack_id}", dependencies=[Depends(require_admin)])
 async def delete_product_pack(product_id: str, pack_id: str):
     sb = get_supabase()
     resp = sb.table('product_pack_options').delete().eq('id', pack_id).eq('product_id', product_id).execute()

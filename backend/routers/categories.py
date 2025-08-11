@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from pydantic import BaseModel
 import uuid
 from supabase_client import get_supabase
+from .auth_utils import require_admin
 
 router = APIRouter()
 
@@ -50,7 +51,7 @@ async def get_category(category_id: str):
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
     return data[0]
 
-@router.post("/categories")
+@router.post("/categories", dependencies=[Depends(require_admin)])
 async def create_category(category: CategoryCreate):
     """Crear una nueva categoría"""
     sb = get_supabase()
@@ -66,7 +67,7 @@ async def create_category(category: CategoryCreate):
         raise HTTPException(status_code=500, detail="No se pudo crear la categoría")
     return data[0]
 
-@router.put("/categories/{category_id}")
+@router.put("/categories/{category_id}", dependencies=[Depends(require_admin)])
 async def update_category(category_id: str, category: CategoryCreate):
     """Actualizar una categoría existente"""
     sb = get_supabase()
@@ -77,7 +78,7 @@ async def update_category(category_id: str, category: CategoryCreate):
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
     return data[0]
 
-@router.delete("/categories/{category_id}")
+@router.delete("/categories/{category_id}", dependencies=[Depends(require_admin)])
 async def delete_category(category_id: str):
     """Eliminar una categoría"""
     sb = get_supabase()

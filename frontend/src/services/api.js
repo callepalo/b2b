@@ -1,11 +1,15 @@
+import { auth } from './auth'
 const BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || '';
 
 async function http(method, path, body) {
+  const headers = {
+    'Content-Type': 'application/json',
+  }
+  const token = auth.getAccessToken?.() || null
+  if (token) headers['Authorization'] = `Bearer ${token}`
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await res.text();
@@ -46,8 +50,12 @@ export const api = {
   uploadProductImage(id, file) {
     const form = new FormData();
     form.append('file', file);
+    const headers = {}
+    const token = auth.getAccessToken?.() || null
+    if (token) headers['Authorization'] = `Bearer ${token}`
     return fetch(`${BASE_URL}/api/v1/products/${id}/image`, {
       method: 'POST',
+      headers,
       body: form,
     }).then(async (res) => {
       const text = await res.text();
