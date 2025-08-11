@@ -45,11 +45,8 @@ def get_current_user(creds: Optional[HTTPAuthorizationCredentials] = Depends(bea
     sb = get_supabase()
     email_claim = payload.get('email')
     # 1) Buscar por id (lo esperado si id = auth.users.id)
-    sel = 'id,email,role,user_id'
+    sel = 'id,email,role'
     prof = sb.table('profiles').select(sel).eq('id', user_id).limit(1).execute().data or []
-    if not prof:
-        # 2) Algunos esquemas usan columna user_id
-        prof = sb.table('profiles').select(sel).eq('user_id', user_id).limit(1).execute().data or []
     if not prof and email_claim:
         # 3) Fallback por email si existe
         prof = sb.table('profiles').select(sel).eq('email', email_claim).limit(1).execute().data or []
