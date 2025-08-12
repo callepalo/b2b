@@ -10,7 +10,7 @@ export async function fetchResolvedPrices() {
   const token = auth.getAccessToken()
   if (!token) throw new Error('No hay sesión activa')
   const base = getBaseUrl()
-  const res = await fetch(`${base}/api/v1/products/prices`, {
+  const res = await fetch(`${base}/api/v1/pricing/products`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   const text = await res.text()

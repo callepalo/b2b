@@ -19,7 +19,7 @@ def _assert_env():
         raise HTTPException(status_code=500, detail=f"Backend env vars missing: {', '.join(missing)}")
 
 
-@router.get("/products/prices")
+@router.get("/pricing/products")
 async def get_products_prices(request: Request):
     """
     Devuelve productos con precio resuelto (override cliente -> segmento -> price_base).
