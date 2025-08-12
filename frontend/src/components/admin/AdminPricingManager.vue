@@ -32,12 +32,12 @@ async function loadMeta() {
   loading.value = true
   error.value = ''
   try {
-    const [prodRes, ut, og] = await Promise.all([
-      api.listProducts({ per_page: 500 }),
+    const [allProducts, ut, og] = await Promise.all([
+      fetchAllProducts(),
       adminPricing.listUserTypes?.() || fetchUserTypesFallback(),
       adminPricing.listOrganizations?.() || fetchOrgsFallback(),
     ])
-    products.value = prodRes?.data || []
+    products.value = allProducts || []
     userTypes.value = ut || []
     orgs.value = og || []
   } catch (e) {
@@ -55,6 +55,22 @@ async function fetchUserTypesFallback() {
 async function fetchOrgsFallback() {
   return fetch(`${import.meta.env.VITE_API_URL}/api/v1/admin/organizations`, { headers: { Authorization: `Bearer ${auth.getAccessToken()}` } })
     .then(r => r.json())
+}
+
+// Fetch all products paginating (backend limit per_page<=100)
+async function fetchAllProducts() {
+  const perPage = 100
+  let page = 1
+  const items = []
+  while (true) {
+    const res = await api.listProducts({ per_page: perPage, page })
+    const chunk = res?.data || []
+    items.push(...chunk)
+    if (!chunk.length || chunk.length < perPage) break
+    page += 1
+    if (page > 50) break // safety cap
+  }
+  return items
 }
 
 async function refreshSegments() {
