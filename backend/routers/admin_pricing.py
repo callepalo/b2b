@@ -129,3 +129,16 @@ async def update_override(id: str, payload: OverridePriceIn, admin: AdminContext
 async def delete_override(id: str, admin: AdminContext = Depends(require_admin), sb: Client = Depends(get_supabase)):
     resp = sb.table('customer_overrides').delete().eq('id', id).execute()
     return {"deleted": True}
+
+# Admin metadata helpers
+@router.get("/admin/user-types")
+async def list_user_types(admin: AdminContext = Depends(require_admin), sb: Client = Depends(get_supabase)):
+    resp = sb.table('user_types').select('id, name').order('name').execute()
+    data = resp.data if hasattr(resp, 'data') else resp.get('data', [])
+    return data or []
+
+@router.get("/admin/organizations")
+async def list_organizations(admin: AdminContext = Depends(require_admin), sb: Client = Depends(get_supabase)):
+    resp = sb.table('organizations').select('id, name, user_type_id').order('name').execute()
+    data = resp.data if hasattr(resp, 'data') else resp.get('data', [])
+    return data or []

@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import ProductsManager from './components/ProductsManager.vue'
 import CategoriesManager from './components/CategoriesManager.vue'
+import AdminPricingManager from './components/admin/AdminPricingManager.vue'
 import CatalogView from './components/CatalogView.vue'
 import { auth } from './services/auth'
 
@@ -16,6 +17,7 @@ const tabs = computed(() => {
   if (isAdmin.value) {
     base.push({ key: 'products', label: 'Productos' })
     base.push({ key: 'categories', label: 'Categorías' })
+    base.push({ key: 'pricing', label: 'Precios' })
   }
   return base
 })
@@ -108,7 +110,8 @@ async function doLogout() {
       <template v-else>
         <div v-if="!isAdmin" class="guard">Se requiere rol administrador para acceder.</div>
         <ProductsManager v-else-if="tab === 'products'" />
-        <CategoriesManager v-else />
+        <CategoriesManager v-else-if="tab === 'categories'" />
+        <AdminPricingManager v-else-if="tab === 'pricing'" />
       </template>
     </main>
 
