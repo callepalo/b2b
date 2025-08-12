@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import ping, categories, products, profiles
-from routers import pricing
+from routers import pricing, admin_pricing
 
 app = FastAPI(
     title="DulcePromax API",
@@ -30,6 +30,7 @@ app.include_router(categories.router, prefix="/api/v1", tags=["categories"])
 app.include_router(products.router, prefix="/api/v1", tags=["products"])
 app.include_router(profiles.router, prefix="/api/v1", tags=["profiles"])
 app.include_router(pricing.router, prefix="/api/v1", tags=["pricing"])
+app.include_router(admin_pricing.router, prefix="/api/v1", tags=["admin-pricing"])
 
 if __name__ == "__main__":
     import uvicorn
