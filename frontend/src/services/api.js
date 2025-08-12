@@ -16,7 +16,24 @@ async function http(method, path, body) {
   let data;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!res.ok) {
-    const msg = (data && (data.detail || data.message)) || res.statusText;
+    let msg = res.statusText;
+    if (data) {
+      if (typeof data === 'string') msg = data;
+      else if (data.detail) {
+        // FastAPI may return detail as string or list of validation errors
+        if (Array.isArray(data.detail)) {
+          msg = data.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join('; ');
+        } else if (typeof data.detail === 'object') {
+          msg = JSON.stringify(data.detail);
+        } else {
+          msg = String(data.detail);
+        }
+      } else if (data.message) {
+        msg = String(data.message);
+      } else {
+        msg = JSON.stringify(data);
+      }
+    }
     throw new Error(`HTTP ${res.status}: ${msg}`);
   }
   return data;
