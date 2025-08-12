@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { api } from '../services/api'
+import { fetchResolvedPrices } from '../services/pricingService'
 
 const products = ref([])
+const resolvedPriceMap = ref({}) // { [product_id]: price_resuelto }
 const categories = ref([])
 const loading = ref(false)
 const error = ref('')
@@ -24,6 +26,21 @@ function formattedPrice(val) {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(val || 0)
 }
 
+function getResolvedPrice(p) {
+  if (!p || !p.id) return null
+  return resolvedPriceMap.value[p.id] ?? null
+}
+
+function displayPrice(p) {
+  const rp = getResolvedPrice(p)
+  if (rp != null) return rp
+  return p?.min_price ?? null
+}
+
+function hasResolvedPrice(p) {
+  return getResolvedPrice(p) != null
+}
+
 const productsView = computed(() => {
   let list = [...(products.value || [])]
   const q = searchQuery.value.trim().toLowerCase()
@@ -35,9 +52,9 @@ const productsView = computed(() => {
   }
   switch (sortKey.value) {
     case 'price_asc':
-      list.sort((a,b) => (a.min_price||0) - (b.min_price||0)); break
+      list.sort((a,b) => (displayPrice(a)||0) - (displayPrice(b)||0)); break
     case 'price_desc':
-      list.sort((a,b) => (b.min_price||0) - (a.min_price||0)); break
+      list.sort((a,b) => (displayPrice(b)||0) - (displayPrice(a)||0)); break
     default:
       list.sort((a,b) => (a.name||'').localeCompare(b.name||'')); break
   }
@@ -64,8 +81,24 @@ async function loadProducts() {
   }
 }
 
+async function loadResolved() {
+  try {
+    const rows = await fetchResolvedPrices()
+    const map = {}
+    for (const r of rows) {
+      if (r && r.product_id) map[r.product_id] = r.price_resuelto
+    }
+    resolvedPriceMap.value = map
+  } catch (e) {
+    // Sin sesión o error: ignoramos silenciosamente en catálogo
+    // console.debug('resolved prices not available', e)
+  }
+}
+
 onMounted(async () => {
   await Promise.all([loadCategories(), loadProducts()])
+  // Intentar cargar precios resueltos (requiere sesión). Si falla, no interrumpe el catálogo.
+  await loadResolved()
 })
 </script>
 
@@ -102,7 +135,10 @@ onMounted(async () => {
         <div class="info">
           <h3 class="name">{{ p.name }}</h3>
           <div class="meta">
-            <span class="price" v-if="p.min_price != null">Desde {{ formattedPrice(p.min_price) }}</span>
+            <span class="price" v-if="displayPrice(p) != null">
+              <template v-if="hasResolvedPrice(p)">Precio {{ formattedPrice(displayPrice(p)) }}</template>
+              <template v-else>Desde {{ formattedPrice(displayPrice(p)) }}</template>
+            </span>
             <span class="price" v-else>Precio no disponible</span>
           </div>
           <div class="category">{{ (categories.find(c => c.id === p.category_id)?.name) || '-' }}</div>
